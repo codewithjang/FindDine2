@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model restaurant {
+  id             Int      @id @default(autoincrement())
+  address        String
+  phone          String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime
+  email          String   @unique(map: "Restaurant_email_key")
+  facilities     String?  @db.LongText
+  foodType       String
+  latitude       Float?
+  lifestyles     String?  @db.LongText
+  locationStyles String?  @db.LongText
+  longitude      Float?
+  nearbyPlaces   String?
+  password       String
+  paymentOptions String?  @db.LongText
+  photos         String?  @db.LongText
+  priceRange     String?  @db.VarChar(50)
+  restaurantName String
+  serviceOptions String?  @db.LongText
+  startingPrice  Int?
+}
+
+model user {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String   @unique(map: "User_email_key")
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
