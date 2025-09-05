@@ -13,12 +13,33 @@ import {
   GitCompare
 } from 'lucide-react';
 import { Link } from "react-router-dom";
-import RestaurantCompare from './RestaurantCompare';
+import RestaurantCompare from './CompareRestaurant';
+import Bang from './assets/Bang.png';
 
 // Mock data for demonstration (ในระบบจริงจะดึงจาก API)
 const mockRestaurants = [
   {
     id: 1,
+    name: "ร้านข้าวหมกไก่บังหลัง มอ.",
+    foodTypes: [{ foodType: "thai" }], // ← array
+    priceRangeMin: 50,
+    priceRangeMax: 100,
+    rating: 4.5,
+    isOpen: true,
+    distance: 700, // หน่วยเมตร
+    photos: [
+      {
+        src: Bang
+      },
+    ],
+    lifestyles: [{ lifestyleType: "halal" }],
+    locationStyles: [{ locationType: "in_city" }],
+    serviceOptions: [{ serviceType: "accept_reservation" }],
+    facilities: [{ facilityType: "wifi_available" }],
+    paymentOptions: [{ paymentType: "accepts_bank_payment" }],
+  },
+  {
+    id: 2,
     name: "ร้านอาหารทะเลสด",
     foodTypes: [{ foodType: "seafood" }], // ← array
     priceRangeMin: 150,
@@ -39,7 +60,7 @@ const mockRestaurants = [
     paymentOptions: [{ paymentType: "accepts_bank_payment" }, { paymentType: "accepts_credit_card" }],
   },
   {
-    id: 2,
+    id: 3,
     name: "บ้านสวนอาหารไทย",
     foodTypes: [{ foodType: "thai" }],
     priceRangeMin: 80,
@@ -60,7 +81,7 @@ const mockRestaurants = [
     paymentOptions: [{ paymentType: "accepts_bank_payment" }],
   },
   {
-    id: 3,
+    id: 4,
     name: "Urban Café & Bistro",
     foodTypes: [{ foodType: "cafe" }, { foodType: "dessert" }],
     priceRangeMin: 120,
@@ -285,7 +306,7 @@ export default function MainPage() {
         <img
           src={bg}
           alt="Background"
-          className="absolute inset-0 w-full h-full object-cover opacity-30 md:opacity-90 z-0"
+          className="absolute inset-0 w-full h-full object-cover opacity-50 md:opacity-90 z-0"
         />
 
         {/* Content */}
@@ -360,8 +381,8 @@ export default function MainPage() {
                       type="button"
                       onClick={() => setDistance(500)} // สมมติว่า "ใกล้ฉัน" = ไม่เกิน 500 เมตร
                       className={`flex-1 px-4 py-2 rounded-lg border font-medium transition ${distance === 500
-                          ? "bg-orange-500 text-white border-orange-500"
-                          : "bg-white text-gray-700 border-gray-300 hover:border-orange-400"
+                        ? "bg-orange-500 text-white border-orange-500"
+                        : "bg-white text-gray-700 border-gray-300 hover:border-orange-400"
                         }`}
                     >
                       ใกล้ฉัน

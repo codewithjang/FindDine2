@@ -163,7 +163,7 @@ const LoginForm = () => {
       </div>
 
       <div className="mt-4 text-center text-sm text-gray-500">
-        <p>ยังไม่มีบัญชี? <a href="#" className="text-orange-600 hover:underline">สมัครสมาชิก</a></p>
+        <p>ยังไม่มีบัญชี? <a href="" className="text-orange-600 hover:underline">สมัครสมาชิก</a></p>
       </div>
 
       {/* ปุ่ม Google Login */}

@@ -39,7 +39,7 @@ export default function Navbar() {
             </Link>
             {/* รีวิว */}
             <a
-              href="#reviews"
+              href="/reviews"
               className="flex items-center text-white hover:text-orange-200 font-medium transition-colors"
             >
               <Star className="h-5 w-5 mr-1" />
@@ -47,7 +47,7 @@ export default function Navbar() {
             </a>
             {/* แผนที่ */}
             <a
-              href="#map"
+              href="/map"
               className="flex items-center text-white hover:text-orange-200 font-medium transition-colors"
             >
               <MapPin className="h-5 w-5 mr-1" />
@@ -163,10 +163,10 @@ export default function Navbar() {
                 </div>
               </div>
 
-              <a href="#reviews" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-orange-500">
+              <a href="/reviews" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-orange-500">
                 รีวิว
               </a>
-              <a href="#map" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-orange-500">
+              <a href="/map" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-orange-500">
                 แผนที่
               </a>
             </div>

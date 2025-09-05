@@ -16,15 +16,15 @@ import UserRegist from './UserRegist';
 
 import UserLogin from './UserLogin';
 import RestaurantDetail from './RestaurantDetail';
-import RestaurantCompare from './RestaurantCompare';
-import RestaurantBooking from './RestaurantBooking'
-import Restaurant_MainPage from './Restaurant_MainPage'
+import CompareRestaurant from './CompareRestaurant';
+import ResBooking from './ResBooking'
+import RestaurantMainPage from './RestaurantMainPage'
 import EditProfile from './EditProfile'
 
 function Layout() {
   const location = useLocation();
 
-  const isRestaurantPage = location.pathname.startsWith("/Restaurant_");
+  const isRestaurantPage = location.pathname.startsWith("/Restaurant");
 
   return (
     <>
@@ -116,9 +116,9 @@ function Layout() {
         <Route path="/UserRegist" element={<UserRegist />} />
         <Route path="/UserLogin" element={<UserLogin />} />
         <Route path="/RestaurantDetail/:id" element={<RestaurantDetail />} />
-        <Route path="/RestaurantCompare" element={<RestaurantCompare />} />
-        <Route path="/RestaurantBooking" element={<RestaurantBooking />} />
-        <Route path="/Restaurant_MainPage" element={<Restaurant_MainPage />} />
+        <Route path="/CompareRestaurant" element={<CompareRestaurant />} />
+        <Route path="/ResBooking" element={<ResBooking />} />
+        <Route path="/RestaurantMainPage" element={<RestaurantMainPage />} />
         <Route path="/EditProfile" element={<EditProfile />} />
       </Routes>
     </>

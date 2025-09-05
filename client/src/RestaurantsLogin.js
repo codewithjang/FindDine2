@@ -90,7 +90,7 @@ const RestaurantLogin = () => {
                     <div className="mt-4 text-right text-sm text-gray-500">
                         <p>
                             <a
-                                href="#"
+                                href="/"
                                 className="text-orange-600 hover:underline"
                                 onClick={handleForgotPassword}
                             >
@@ -113,7 +113,7 @@ const RestaurantLogin = () => {
                     <p>
                         ยังไม่มีบัญชี?
                         <a
-                            href="#"
+                            href="/"
                             className="text-orange-600 hover:underline ml-1"
                             onClick={() => {
                                 // Add navigation logic to registration page

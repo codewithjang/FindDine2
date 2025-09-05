@@ -21,6 +21,19 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
     // ใช้ข้อมูลจาก MainPage และเพิ่มข้อมูลเพิ่มเติมสำหรับการเปรียบเทียบ
     const mockAdditionalData = {
         1: {
+            reviewCount: 124,
+            openTime: "10:00",
+            closeTime: "21:00",
+            phone: "095 257 9562",
+            address: "ถนนเหมืองเจ้าฟ้า Kathu, Kathu District, Phuket 83120",
+            serviceOptions: [
+                { serviceType: "accept_reservation" },
+                { serviceType: "wifi" },
+            ],
+            popularDishes: ["ข้าวหมกไก่ทอด", "ข้าวมันไก่ทอด", "ข้าวไก่คั่วพริกเกลือ"],
+            distance: 700
+        },
+        2: {
             reviewCount: 324,
             openTime: "10:00",
             closeTime: "22:00",
@@ -35,7 +48,7 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
             popularDishes: ["ปลากะพงนึ่งมะนาว", "กุ้งเผาเกลือ", "ปูผัดผงกะหรี่"],
             distance: 2.5
         },
-        2: {
+        3: {
             reviewCount: 189,
             openTime: "11:00",
             closeTime: "21:00",
@@ -48,7 +61,7 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
             popularDishes: ["ผัดไทย", "ต้มยำกุ้ง", "แกงเขียวหวานไก่"],
             distance: 1.2
         },
-        3: {
+        4: {
             reviewCount: 156,
             openTime: "08:00",
             closeTime: "20:00",

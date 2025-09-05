@@ -341,7 +341,7 @@ const RestaurantDetail = ({ restaurantId, onBack }) => {
                 </button>
 
                 <Link
-                  to="/RestaurantBooking"
+                  to="/ResBooking"
                   className="block w-full bg-orange-700 text-white py-3 rounded-lg hover:bg-orange-800 transition-colors font-medium text-center"
                 >
                   <Calendar className="w-4 h-4 inline mr-2" />

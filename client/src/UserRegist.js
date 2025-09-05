@@ -184,7 +184,7 @@ const RegisterForm = () => {
                 </form>
 
                 <div className="mt-4 text-center text-sm text-gray-500">
-                    <p>มีบัญชีแล้ว? <a href="#" className="text-orange-600 hover:underline">เข้าสู่ระบบ</a></p>
+                    <p>มีบัญชีแล้ว? <a href="/" className="text-orange-600 hover:underline">เข้าสู่ระบบ</a></p>
                 </div>
 
                 {/* ปุ่ม Google Login */}
