@@ -33,7 +33,7 @@
   cd client
   npm run start
 
-##Contributors
+## Contributors
 Hafeezan Kutha (Jang) – Frontend Developer & System Designer
 
 ## Future Improvements
