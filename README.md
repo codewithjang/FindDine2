@@ -3,7 +3,7 @@
 
 ## Demo
 🔗 Try FindDine on Netlify : https://finddine.netlify.app/
-<img width="1897" height="909" alt="image" src="https://github.com/user-attachments/assets/2cb69cae-6273-4bf4-9f8b-f1475f529140" />
+<img width="1297" height="709" alt="image" src="https://github.com/user-attachments/assets/2cb69cae-6273-4bf4-9f8b-f1475f529140" />
 
 ## Features
 - 🔎 ค้นหาร้านอาหาร พร้อมตัวกรอง (ประเภทอาหาร, วิว, สิ่งอำนวยความสะดวก)
