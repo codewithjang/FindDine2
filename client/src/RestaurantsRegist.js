@@ -137,21 +137,19 @@ export default function RestaurantRegistration() {
                     [name]: currentArray.filter(item => item !== value)
                 }));
             }
-        } else if (type === 'file') {
-            const fileArray = Array.from(files);
-            setFormData(prev => ({
-                ...prev,
-                photos: [...prev.photos, ...fileArray]
-            }));
+        } else if (type === 'file' && name === 'photos') {
+            const list = Array.from(files || []);
 
-            // Create preview images
-            fileArray.forEach((file) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    setPreviewImages(prev => [...prev, e.target.result]);
-                };
-                reader.readAsDataURL(file);
-            });
+            // เก็บไฟล์จริงไว้ส่งให้ backend
+            setFormData(prev => ({ ...prev, photos: [...prev.photos, ...list] }));
+
+            // พรีวิวแบบเบา ๆ
+            const urls = list.map(f => URL.createObjectURL(f));
+            setPreviewImages(prev => [...prev, ...urls]);
+
+            // เพื่อให้เลือกไฟล์ชื่อเดิมซ้ำได้อีกครั้ง
+            e.target.value = null;
+            return;
         } else {
             setFormData(prev => ({
                 ...prev,
@@ -184,12 +182,22 @@ export default function RestaurantRegistration() {
     };
 
     const removePhoto = (index) => {
+        setPreviewImages(prev => {
+            const url = prev[index];
+            if (url) URL.revokeObjectURL(url);
+            return prev.filter((_, i) => i !== index);
+        });
         setFormData(prev => ({
             ...prev,
             photos: prev.photos.filter((_, i) => i !== index)
         }));
-        setPreviewImages(prev => prev.filter((_, i) => i !== index));
     };
+
+    // useEffect(() => {
+    //     return () => {
+    //         previewImages.forEach(u => URL.revokeObjectURL(u));
+    //     };
+    // }, []);
 
     const validateStep = (step) => {
         const newErrors = {};
@@ -238,47 +246,65 @@ export default function RestaurantRegistration() {
     const handleFinalSubmit = async () => {
         console.log("🚨 Final submit triggered from step:", currentStep);
 
-        // ตรวจสอบว่าอยู่ step 4 และผ่าน validation
-        if (currentStep !== 4) {
-            console.log("❌ Submit blocked: Not on step 4");
-            return;
-        }
-
-        if (!validateStep(4)) {
-            console.log("❌ Validation failed");
-            return;
-        }
+        // ต้องอยู่ Step 4 และผ่าน validation
+        if (currentStep !== 4) return;
+        if (!validateStep(4)) return;
 
         setIsLoading(true);
-        console.log("✅ Proceeding with submission...");
-        console.log("Submitting formData:", formData);
-
         try {
-            const response = await fetch("http://localhost:3001/api/restaurants/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+            // 1) สร้าง FormData
+            const fd = new FormData();
+
+            // 2) แนบไฟล์ทั้งหมด (ชื่อคีย์ต้องตรงกับ backend: upload.array("photos", 10))
+            (formData.photos || []).forEach(file => {
+                fd.append("photos", file, file.name);
             });
 
-            if (!response.ok) {
-                throw new Error("Server error: " + response.status);
+            // 3) แนบฟิลด์ข้อความ/ตัวเลข (schema ตอนนี้ priceRange เป็น String? จึงส่งเป็นสตริง)
+            const primitives = [
+                "restaurantName",
+                "foodType",
+                "email",
+                "password",
+                "latitude",
+                "longitude",
+                "address",
+                "nearbyPlaces",
+                "phone",
+                "priceRange",     // String?
+                "startingPrice",  // Int? (backend จะ parseInt เอง ถ้าว่างจะเป็น null)
+                "description",
+            ];
+            primitives.forEach(k => fd.append(k, formData[k] ?? ""));
+
+            // 4) ฟิลด์ที่เป็นลิสต์ → stringify ก่อน (backend จะ parse JSON)
+            fd.append("facilities", JSON.stringify(formData.facilities || []));
+            fd.append("paymentOptions", JSON.stringify(formData.paymentOptions || []));
+            fd.append("serviceOptions", JSON.stringify(formData.serviceOptions || []));
+            fd.append("locationStyles", JSON.stringify(formData.locationStyles || []));
+            fd.append("lifestyles", JSON.stringify(formData.lifestyles || []));
+
+            // 5) ยิงไปที่ backend (อย่าเซ็ต headers: Content-Type เอง)
+            const res = await fetch("http://localhost:3001/api/restaurants/register", {
+                method: "POST",
+                body: fd,
+            });
+
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || "ลงทะเบียนไม่สำเร็จ");
             }
 
-            const data = await response.json();
-            if (data.success) {
-                alert("ลงทะเบียนร้านอาหารเรียบร้อย!");
-                // เมื่อกด OK ใน alert จะไปหน้า login
-                navigate('/RestaurantsLogin');
-            } else {
-                alert(data.message || "เกิดข้อผิดพลาด");
-            }
+            alert("ลงทะเบียนร้านอาหารเรียบร้อย!");
+            navigate("/RestaurantLogin");
         } catch (error) {
-            console.error("Fetch error:", error);
-            alert("ไม่สามารถเชื่อมต่อ server ได้");
+            console.error("Submit error:", error);
+            alert(error.message || "เกิดข้อผิดพลาดขณะส่งข้อมูล");
         } finally {
             setIsLoading(false);
         }
     };
+
 
     // ป้องกัน form submit
     const handleFormSubmit = (e) => {
@@ -299,8 +325,6 @@ export default function RestaurantRegistration() {
             // ใน step 4 ไม่ทำอะไร เพื่อป้องกัน submit
         }
     };
-
-
 
     const renderStep1 = () => (
         <div className="space-y-4">

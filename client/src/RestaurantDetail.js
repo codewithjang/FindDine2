@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
   Star,
@@ -17,84 +17,79 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import axios from 'axios';
+import RestaurantMap from './component/RestaurantMap';
 
-const RestaurantDetail = ({ restaurantId, onBack }) => {
+const RestaurantDetail = (props) => {
+  const { id } = useParams();
+  const restaurantId = id;
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeTab, setActiveTab] = useState('overview');
+  const [restaurant, setRestaurant] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data - ในระบบจริงจะดึงจาก API ตาม restaurantId
-  const restaurant = {
-    id: 1,
-    name: "ร้านอาหารทะเลสด",
-    foodType: "อาหารทะเล",
-    priceRangeMin: 150,
-    priceRangeMax: 500,
-    rating: 4.5,
-    reviewCount: 324,
-    isOpen: true,
-    openTime: "10:00",
-    closeTime: "22:00",
-    phone: "077-123456",
-    address: "123 หาดบางนางรม ต.ตะกั่วป่า อ.ตะกั่วป่า จ.พังงา 82110",
-    description: "ร้านอาหารทะเลสดใหม่ วิวทะเลสวยงาม บรรยากาศดี เหมาะสำหรับครอบครัวและคู่รัก ปลาทุกตัวจับสดใหม่ทุกวัน",
-    photos: [
-      { photoUrl: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=800", isPrimary: true },
-      { photoUrl: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800" },
-      { photoUrl: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=800" },
-      { photoUrl: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800" }
-    ],
-    lifestyles: [{ lifestyleType: "halal" }],
-    locationStyles: [{ locationType: "sea_view" }],
-    serviceOptions: [
-      { serviceType: "accept_reservation" },
-      { serviceType: "wifi" },
-      { serviceType: "parking" },
-      { serviceType: "credit_card" }
-    ],
-    menuHighlights: [
-      { name: "ปลากะพงนึ่งมะนาว", price: 280, image: "https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=300" },
-      { name: "กุ้งเผาเกลือ", price: 350, image: "https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=300" },
-      { name: "ปูผัดผงกะหรี่", price: 420, image: "https://images.unsplash.com/photo-1559314809-0f31657def5e?w=300" },
-      { name: "ยำทะเลรวม", price: 180, image: "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=300" }
-    ],
-    reviews: [
-      {
-        id: 1,
-        userName: "สมชาย ใจดี",
-        rating: 5,
-        comment: "อาหารอร่อยมาก บรรยากาศดี วิวสวย แนะนำเลยครับ",
-        date: "2024-01-15",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100"
-      },
-      {
-        id: 2,
-        userName: "แสงดาว รักทะเล",
-        rating: 4,
-        comment: "ปลาสดมาก แต่รอนานหน่อย โดยรวมดีครับ",
-        date: "2024-01-10",
-        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100"
-      }
-    ]
-  };
+
+  // ดึงข้อมูลร้านอาหารจาก backend ตาม restaurantId
+  useEffect(() => {
+    if (!restaurantId) return;
+    setLoading(true);
+    setError(null);
+    axios.get(`http://localhost:3001/api/restaurants/${restaurantId}`)
+      .then(res => {
+        const r = res.data;
+        setRestaurant({
+          ...r,
+          photos: Array.isArray(r.photos) ? r.photos : (r.photos ? JSON.parse(r.photos) : []),
+          lifestyles: Array.isArray(r.lifestyles) ? r.lifestyles : (r.lifestyles ? JSON.parse(r.lifestyles) : []),
+          locationStyles: Array.isArray(r.locationStyles) ? r.locationStyles : (r.locationStyles ? JSON.parse(r.locationStyles) : []),
+          serviceOptions: Array.isArray(r.serviceOptions) ? r.serviceOptions : (r.serviceOptions ? JSON.parse(r.serviceOptions) : []),
+          facilities: Array.isArray(r.facilities) ? r.facilities : (r.facilities ? JSON.parse(r.facilities) : []),
+          paymentOptions: Array.isArray(r.paymentOptions) ? r.paymentOptions : (r.paymentOptions ? JSON.parse(r.paymentOptions) : []),
+          menuHighlights: Array.isArray(r.menuHighlights) ? r.menuHighlights : (r.menuHighlights ? JSON.parse(r.menuHighlights) : []),
+          reviews: Array.isArray(r.reviews) ? r.reviews : (r.reviews ? JSON.parse(r.reviews) : []),
+        });
+        setLoading(false);
+      })
+      .catch((err) => {
+        setRestaurant(null);
+        setLoading(false);
+        setError('ไม่พบข้อมูลร้านอาหาร');
+        console.error('RestaurantDetail: API error', err);
+      });
+  }, [restaurantId]);
 
   const renderStars = (rating) => {
-    return [...Array(5)].map((_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'
-          }`}
-      />
-    ));
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />);
+    }
+
+    if (hasHalfStar) {
+      stars.push(<Star key="half" className="w-4 h-4 fill-yellow-400 text-yellow-400 opacity-50" />);
+    }
+
+    const remainingStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < remainingStars; i++) {
+      stars.push(<Star key={`empty-${i}`} className="w-4 h-4 text-gray-300" />);
+    }
+
+    return stars;
   };
 
   const nextImage = () => {
+    if (!restaurant || !restaurant.photos || restaurant.photos.length === 0) return;
     setCurrentImageIndex((prev) =>
       prev === restaurant.photos.length - 1 ? 0 : prev + 1
     );
   };
 
   const prevImage = () => {
+    if (!restaurant || !restaurant.photos || restaurant.photos.length === 0) return;
     setCurrentImageIndex((prev) =>
       prev === 0 ? restaurant.photos.length - 1 : prev - 1
     );
@@ -120,42 +115,76 @@ const RestaurantDetail = ({ restaurantId, onBack }) => {
     }
   };
 
+  if (!restaurantId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-400">
+        ไม่พบรหัสร้านอาหาร (URL param ไม่ถูกต้อง)
+      </div>
+    );
+  }
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        กำลังโหลดข้อมูลร้านอาหาร...
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-400">
+        {error}
+      </div>
+    );
+  }
+  if (!restaurant) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-400">
+        ไม่พบข้อมูลร้านอาหาร
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Image Gallery */}
         <div className="relative h-96 rounded-2xl overflow-hidden mb-6">
           <img
-            src={restaurant.photos[currentImageIndex]?.photoUrl}
-            alt={restaurant.name}
+            src={restaurant.photos && restaurant.photos.length > 0 ? (restaurant.photos[0].photoUrl || restaurant.photos[0].url) : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'}
+            alt={restaurant.restaurantName}
             className="w-full h-full object-cover"
           />
 
           {/* Navigation Arrows */}
-          <button
-            onClick={prevImage}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            onClick={nextImage}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+          {restaurant.photos && restaurant.photos.length > 1 && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </>
+          )}
 
           {/* Image Indicators */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-            {restaurant.photos.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`w-3 h-3 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
-                  }`}
-              />
-            ))}
-          </div>
+          {restaurant.photos && restaurant.photos.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+              {restaurant.photos.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentImageIndex(index)}
+                  className={`w-3 h-3 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -166,7 +195,7 @@ const RestaurantDetail = ({ restaurantId, onBack }) => {
               <div className="flex items-start justify-between mb-4">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    {restaurant.name}
+                    {restaurant.restaurantName}
                   </h1>
                   <p className="text-lg text-gray-600 mb-3">{restaurant.foodType}</p>
                   <div className="flex items-center space-x-4">
@@ -175,8 +204,7 @@ const RestaurantDetail = ({ restaurantId, onBack }) => {
                       <span className="font-medium">{restaurant.rating}</span>
                       <span className="text-gray-500">({restaurant.reviewCount} รีวิว)</span>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${restaurant.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                      }`}>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${restaurant.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                       <Clock className="w-4 h-4 inline mr-1" />
                       {restaurant.isOpen ? `เปิดอยู่ • ปิด ${restaurant.closeTime} น.` : 'ปิดแล้ว'}
                     </span>
@@ -184,27 +212,37 @@ const RestaurantDetail = ({ restaurantId, onBack }) => {
                 </div>
                 <div className="text-right">
                   <div className="flex items-center space-x-1 text-orange-600 text-lg font-bold">
-                    {/* <DollarSign className="w-5 h-5" /> */}
-                    <span>฿ {restaurant.priceRangeMin} - {restaurant.priceRangeMax}</span>
+                    <span>฿ {restaurant.priceRange}</span>
                   </div>
                 </div>
               </div>
 
               {/* Special Tags */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {restaurant.lifestyles.map((lifestyle, index) => (
-                  <span key={index} className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium">
+                {restaurant.lifestyles && restaurant.lifestyles.includes && restaurant.lifestyles.includes('halal') && (
+                  <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium">
                     Halal
                   </span>
-                ))}
-                {restaurant.locationStyles.map((location, index) => (
+                )}
+                {restaurant.locationStyles && restaurant.locationStyles.map && restaurant.locationStyles.map((location, index) => (
                   <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">
-                    วิวทะเล
+                    {location === 'sea_view' ? 'วิวทะเล' : location === 'in_city' ? 'ในเมือง' : location === 'natural_style' ? 'ธรรมชาติ' : location}
                   </span>
                 ))}
               </div>
 
               <p className="text-gray-700 leading-relaxed">{restaurant.description}</p>
+
+              {/* แผนที่ร้านอาหาร */}
+              {restaurant.latitude && restaurant.longitude && (
+                <div className="my-6">
+                  <RestaurantMap
+                    latitude={Number(restaurant.latitude)}
+                    longitude={Number(restaurant.longitude)}
+                    name={restaurant.restaurantName}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Tabs */}
@@ -220,8 +258,8 @@ const RestaurantDetail = ({ restaurantId, onBack }) => {
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={`py-4 font-medium border-b-2 ${activeTab === tab.id
-                          ? 'border-orange-500 text-orange-600'
-                          : 'border-transparent text-gray-500 hover:text-gray-700'
+                        ? 'border-orange-500 text-orange-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                     >
                       {tab.label}
@@ -264,7 +302,7 @@ const RestaurantDetail = ({ restaurantId, onBack }) => {
                   <div>
                     <h3 className="text-lg font-semibold mb-4">เมนูแนะนำ</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {restaurant.menuHighlights.map((menu, index) => (
+                      {restaurant.menuHighlights && restaurant.menuHighlights.map && restaurant.menuHighlights.map((menu, index) => (
                         <div key={index} className="flex items-center space-x-4 p-3 border rounded-lg">
                           <img
                             src={menu.image}
@@ -285,8 +323,8 @@ const RestaurantDetail = ({ restaurantId, onBack }) => {
                   <div>
                     <h3 className="text-lg font-semibold mb-4">รีวิวจากลูกค้า</h3>
                     <div className="space-y-4">
-                      {restaurant.reviews.map((review) => (
-                        <div key={review.id} className="border-b pb-4">
+                      {restaurant.reviews && restaurant.reviews.map && restaurant.reviews.map((review, idx) => (
+                        <div key={review.id || idx} className="border-b pb-4">
                           <div className="flex items-start space-x-3">
                             <img
                               src={review.avatar}
@@ -317,10 +355,10 @@ const RestaurantDetail = ({ restaurantId, onBack }) => {
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4">สิ่งอำนวยความสะดวก</h3>
               <div className="space-y-3">
-                {restaurant.serviceOptions.map((service, index) => (
+                {restaurant.serviceOptions && restaurant.serviceOptions.map && restaurant.serviceOptions.map((service, index) => (
                   <div key={index} className="flex items-center space-x-3">
-                    {getServiceIcon(service.serviceType)}
-                    <span className="text-gray-700">{getServiceLabel(service.serviceType)}</span>
+                    {getServiceIcon(service)}
+                    <span className="text-gray-700">{getServiceLabel(service)}</span>
                   </div>
                 ))}
               </div>

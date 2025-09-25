@@ -46,13 +46,13 @@ export default function Navbar() {
               <span>รีวิว</span>
             </a>
             {/* แผนที่ */}
-            <a
-              href="/map"
+            <Link
+              to="/AllRestaurantsMap"
               className="flex items-center text-white hover:text-orange-200 font-medium transition-colors"
             >
               <MapPin className="h-5 w-5 mr-1" />
               <span>แผนที่</span>
-            </a>
+            </Link>
           </div>
           {/* Right Side - Search and Profile */}
           <div className="flex items-center space-x-2">
@@ -124,7 +124,7 @@ export default function Navbar() {
                         ลงทะเบียนร้านอาหาร
                       </Link>
                       <Link
-                        to="/RestaurantsLogin"
+                        to="/RestaurantLogin"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
                         onClick={() => setShowUserMenu(false)}
                       >เข้าสู่ระบบร้านอาหาร</Link>

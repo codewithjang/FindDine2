@@ -14,98 +14,30 @@ import {
 } from 'lucide-react';
 import { Link } from "react-router-dom";
 import RestaurantCompare from './CompareRestaurant';
-import Bang from './assets/Bang.png';
 
-// Mock data for demonstration (ในระบบจริงจะดึงจาก API)
-const mockRestaurants = [
-  {
-    id: 1,
-    name: "ร้านข้าวหมกไก่บังหลัง มอ.",
-    foodTypes: [{ foodType: "thai" }], // ← array
-    priceRangeMin: 50,
-    priceRangeMax: 100,
-    rating: 4.5,
-    isOpen: true,
-    distance: 700, // หน่วยเมตร
-    photos: [
-      {
-        src: Bang
-      },
-    ],
-    lifestyles: [{ lifestyleType: "halal" }],
-    locationStyles: [{ locationType: "in_city" }],
-    serviceOptions: [{ serviceType: "accept_reservation" }],
-    facilities: [{ facilityType: "wifi_available" }],
-    paymentOptions: [{ paymentType: "accepts_bank_payment" }],
-  },
-  {
-    id: 2,
-    name: "ร้านอาหารทะเลสด",
-    foodTypes: [{ foodType: "seafood" }], // ← array
-    priceRangeMin: 150,
-    priceRangeMax: 500,
-    rating: 4.5,
-    isOpen: true,
-    distance: 800, // หน่วยเมตร
-    photos: [
-      {
-        photoUrl: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400",
-        isPrimary: true,
-      },
-    ],
-    lifestyles: [{ lifestyleType: "halal" }],
-    locationStyles: [{ locationType: "sea_view" }],
-    serviceOptions: [{ serviceType: "accept_reservation" }],
-    facilities: [{ facilityType: "parking_space" }, { facilityType: "wifi_available" }],
-    paymentOptions: [{ paymentType: "accepts_bank_payment" }, { paymentType: "accepts_credit_card" }],
-  },
-  {
-    id: 3,
-    name: "บ้านสวนอาหารไทย",
-    foodTypes: [{ foodType: "thai" }],
-    priceRangeMin: 80,
-    priceRangeMax: 300,
-    rating: 4.3,
-    isOpen: true,
-    distance: 1500,
-    photos: [
-      {
-        photoUrl: "https://images.unsplash.com/photo-1617093727343-374698b1b08d?w=400",
-        isPrimary: true,
-      },
-    ],
-    lifestyles: [],
-    locationStyles: [{ locationType: "natural_style" }],
-    serviceOptions: [],
-    facilities: [{ facilityType: "kids_area" }],
-    paymentOptions: [{ paymentType: "accepts_bank_payment" }],
-  },
-  {
-    id: 4,
-    name: "Urban Café & Bistro",
-    foodTypes: [{ foodType: "cafe" }, { foodType: "dessert" }],
-    priceRangeMin: 120,
-    priceRangeMax: 400,
-    rating: 4.7,
-    isOpen: false,
-    distance: 500,
-    photos: [
-      {
-        photoUrl: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400",
-        isPrimary: true,
-      },
-    ],
-    lifestyles: [],
-    locationStyles: [{ locationType: "in_city" }],
-    serviceOptions: [{ serviceType: "accept_reservation" }],
-    facilities: [{ facilityType: "wifi_available" }, { facilityType: "work_space_available" }],
-    paymentOptions: [{ paymentType: "accepts_credit_card" }],
-  },
-];
+import axios from 'axios';
 
 
 export default function MainPage() {
-  const [restaurants, setRestaurants] = useState(mockRestaurants);
+  const [restaurants, setRestaurants] = useState([]);
+  // ดึงข้อมูลร้านอาหารจาก backend
+  useEffect(() => {
+    axios.get('http://localhost:3001/api/restaurants')
+      .then(res => {
+        // Normalize array fields
+        const data = res.data.map(r => ({
+          ...r,
+          photos: Array.isArray(r.photos) ? r.photos : (r.photos ? JSON.parse(r.photos) : []),
+          lifestyles: Array.isArray(r.lifestyles) ? r.lifestyles : (r.lifestyles ? JSON.parse(r.lifestyles) : []),
+          locationStyles: Array.isArray(r.locationStyles) ? r.locationStyles : (r.locationStyles ? JSON.parse(r.locationStyles) : []),
+          serviceOptions: Array.isArray(r.serviceOptions) ? r.serviceOptions : (r.serviceOptions ? JSON.parse(r.serviceOptions) : []),
+          facilities: Array.isArray(r.facilities) ? r.facilities : (r.facilities ? JSON.parse(r.facilities) : []),
+          paymentOptions: Array.isArray(r.paymentOptions) ? r.paymentOptions : (r.paymentOptions ? JSON.parse(r.paymentOptions) : []),
+        }));
+        setRestaurants(data);
+      })
+      .catch(() => setRestaurants([]));
+  }, []);
   const [activeFilters, setActiveFilters] = useState([]);
   const [compareList, setCompareList] = useState([]);
   const [currentView, setCurrentView] = useState('main'); // 'main', 'detail', 'compare'
@@ -133,7 +65,7 @@ export default function MainPage() {
     }
     if (filterId === 'all') {
       setActiveFilters([]);
-      setRestaurants(mockRestaurants);
+      // ไม่ต้อง setRestaurants เพราะ restaurants จะถูก filter อัตโนมัติ
       return;
     }
     if (activeFilters.includes(filterId)) {
@@ -145,34 +77,37 @@ export default function MainPage() {
 
   useEffect(() => {
     if (activeFilters.length === 0) {
-      setRestaurants(mockRestaurants);
+      // ไม่ต้อง setRestaurants เพราะ restaurants จะถูก filter อัตโนมัติ
       return;
     }
-    const filtered = mockRestaurants.filter(restaurant => {
+    const filtered = restaurants.filter(restaurant => {
       return activeFilters.every(filterId => {
         switch (filterId) {
           case 'halal':
-            return restaurant.lifestyles.some(l => l.lifestyleType === 'halal');
+            // DB: lifestyles เป็น array ของ string เช่น ["halal"]
+            return Array.isArray(restaurant.lifestyles) && restaurant.lifestyles.includes('halal');
           case 'popular':
             return restaurant.rating >= 4.5;
           case 'reservation':
-            return restaurant.serviceOptions.some(s => s.serviceType === 'accept_reservation');
+            // DB: serviceOptions เป็น array ของ string เช่น ["accept_reservation"]
+            return Array.isArray(restaurant.serviceOptions) && restaurant.serviceOptions.includes('accept_reservation');
           case 'in_city':
-            return restaurant.locationStyles.some(l => l.locationType === 'in_city');
+            // DB: locationStyles เป็น array ของ string เช่น ["in_city"]
+            return Array.isArray(restaurant.locationStyles) && restaurant.locationStyles.includes('in_city');
           case 'sea_view':
-            return restaurant.locationStyles.some(l => l.locationType === 'sea_view');
+            return Array.isArray(restaurant.locationStyles) && restaurant.locationStyles.includes('sea_view');
           case 'natural':
-            return restaurant.locationStyles.some(l => l.locationType === 'natural_style');
+            return Array.isArray(restaurant.locationStyles) && restaurant.locationStyles.includes('natural_style');
           default:
             return true;
         }
       });
     });
     setRestaurants(filtered);
-  }, [activeFilters]);
+  }, [activeFilters, restaurants]);
 
   const applyMoreFilters = () => {
-    const filtered = mockRestaurants.filter((restaurant) => {
+    const filtered = restaurants.filter((restaurant) => {
       let match = true;
 
       // ระยะทาง
@@ -271,7 +206,7 @@ export default function MainPage() {
     return (
       <RestaurantCompare
         compareRestaurants={compareList}
-        allRestaurants={mockRestaurants}
+        allRestaurants={restaurants}
         onRemoveFromCompare={handleRemoveFromCompare}
       />
     );
@@ -513,7 +448,7 @@ export default function MainPage() {
                 </span>
                 <div className="flex space-x-2">
                   {compareList.map(id => {
-                    const restaurant = mockRestaurants.find(r => r.id === id);
+                    const restaurant = restaurants.find(r => r.id === id);
                     return (
                       <span key={id} className="px-2 py-1 bg-orange-200 text-orange-800 text-sm rounded-full">
                         {restaurant?.name}
@@ -539,7 +474,7 @@ export default function MainPage() {
               {/* Restaurant Image */}
               <div className="relative h-48 overflow-hidden">
                 <img
-                  src={restaurant.photos[0]?.photoUrl || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'}
+                  src={restaurant.photos[0]?.url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'}
                   alt={restaurant.name}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
@@ -555,15 +490,11 @@ export default function MainPage() {
                 </div>
                 {/* Special Tags */}
                 <div className="absolute top-3 right-3 flex flex-col space-y-1">
-                  {restaurant.lifestyles.some(l => l.lifestyleType === 'halal') && (
-                    <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full">
-                      Halal
-                    </span>
+                  {restaurant.lifestyles?.includes?.('halal') && (
+                    <span className="px-2 py-1 bg-green-500 text-white text-xs rounded-full">Halal</span>
                   )}
-                  {restaurant.serviceOptions.some(s => s.serviceType === 'accept_reservation') && (
-                    <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
-                      จองได้
-                    </span>
+                  {restaurant.serviceOptions?.includes?.('accepts_reservation') && (
+                    <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">จองได้</span>
                   )}
                 </div>
               </div>
@@ -572,7 +503,7 @@ export default function MainPage() {
               <div className="p-6">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-xl font-bold text-gray-800 line-clamp-1">
-                    {restaurant.name}
+                    {restaurant.restaurantName}
                   </h3>
                   <div className="flex items-center space-x-1">
                     {renderStars(restaurant.rating)}
@@ -588,7 +519,7 @@ export default function MainPage() {
                   <div className="flex items-center space-x-1 text-orange-600">
                     {/* <DollarSign className="w-4 h-4" /> */}
                     <span className="font-medium">
-                      ฿ {restaurant.priceRangeMin} - {restaurant.priceRangeMax}
+                      ฿ {restaurant.priceRange}
                     </span>
                   </div>
                 </div>
@@ -597,9 +528,9 @@ export default function MainPage() {
                 <div className="flex flex-wrap gap-1 mb-4">
                   {restaurant.locationStyles.map((location, index) => (
                     <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                      {location.locationType === 'in_city' && 'ในเมือง'}
-                      {location.locationType === 'sea_view' && 'วิวทะเล'}
-                      {location.locationType === 'natural_style' && 'ธรรมชาติ'}
+                      {location === 'in_city' && 'ในเมือง'}
+                      {location === 'sea_view' && 'วิวทะเล'}
+                      {location === 'natural_style' && 'ธรรมชาติ'}
                     </span>
                   ))}
                 </div>
