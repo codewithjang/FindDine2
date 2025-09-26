@@ -19,6 +19,7 @@ import axios from 'axios';
 
 
 export default function MainPage() {
+  const [originalRestaurants, setOriginalRestaurants] = useState([]);
   const [restaurants, setRestaurants] = useState([]);
   // ดึงข้อมูลร้านอาหารจาก backend
   useEffect(() => {
@@ -34,9 +35,13 @@ export default function MainPage() {
           facilities: Array.isArray(r.facilities) ? r.facilities : (r.facilities ? JSON.parse(r.facilities) : []),
           paymentOptions: Array.isArray(r.paymentOptions) ? r.paymentOptions : (r.paymentOptions ? JSON.parse(r.paymentOptions) : []),
         }));
+        setOriginalRestaurants(data);
         setRestaurants(data);
       })
-      .catch(() => setRestaurants([]));
+      .catch(() => {
+        setOriginalRestaurants([]);
+        setRestaurants([]);
+      });
   }, []);
   const [activeFilters, setActiveFilters] = useState([]);
   const [compareList, setCompareList] = useState([]);
@@ -51,7 +56,7 @@ export default function MainPage() {
   const filters = [
     { id: 'halal', label: 'ฮาลาล', icon: MoonStar },
     { id: 'popular', label: 'ยอดฮิต', icon: Star },
-    { id: 'reservation', label: 'จองโต๊ะ', icon: Calendar },
+    { id: 'accepts_reservation', label: 'จองโต๊ะ', icon: Calendar },
     { id: 'in_city', label: 'ในเมือง', icon: MapPin },
     { id: 'sea_view', label: 'ใกล้ทะเล', icon: Waves },
     { id: 'natural', label: 'ธรรมชาติ', icon: Trees },
@@ -77,22 +82,19 @@ export default function MainPage() {
 
   useEffect(() => {
     if (activeFilters.length === 0) {
-      // ไม่ต้อง setRestaurants เพราะ restaurants จะถูก filter อัตโนมัติ
+      setRestaurants(originalRestaurants);
       return;
     }
-    const filtered = restaurants.filter(restaurant => {
+    const filtered = originalRestaurants.filter(restaurant => {
       return activeFilters.every(filterId => {
         switch (filterId) {
           case 'halal':
-            // DB: lifestyles เป็น array ของ string เช่น ["halal"]
             return Array.isArray(restaurant.lifestyles) && restaurant.lifestyles.includes('halal');
           case 'popular':
             return restaurant.rating >= 4.5;
           case 'reservation':
-            // DB: serviceOptions เป็น array ของ string เช่น ["accept_reservation"]
             return Array.isArray(restaurant.serviceOptions) && restaurant.serviceOptions.includes('accept_reservation');
           case 'in_city':
-            // DB: locationStyles เป็น array ของ string เช่น ["in_city"]
             return Array.isArray(restaurant.locationStyles) && restaurant.locationStyles.includes('in_city');
           case 'sea_view':
             return Array.isArray(restaurant.locationStyles) && restaurant.locationStyles.includes('sea_view');
@@ -104,7 +106,7 @@ export default function MainPage() {
       });
     });
     setRestaurants(filtered);
-  }, [activeFilters, restaurants]);
+  }, [activeFilters, originalRestaurants]);
 
   const applyMoreFilters = () => {
     const filtered = restaurants.filter((restaurant) => {

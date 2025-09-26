@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useEffect } from 'react';
 import axios from 'axios';
-import bg from './assets/bg/bgMainRes.png';
+import bg from '../assets/bg/bgMainRes.png';
 import {
     Bell,
     Calendar,

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MapPicker from './component/MapPicker';
+import MapPicker from '../component/MapPicker';
 import { Store, Upload, X, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
-import bgRes2 from './assets/bg/bgRes2.png';
+import bgRes2 from '../assets/bg/bgRes2.png';
 export default function RestaurantRegistration() {
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -296,7 +296,7 @@ export default function RestaurantRegistration() {
             }
 
             alert("ลงทะเบียนร้านอาหารเรียบร้อย!");
-            navigate("/RestaurantLogin");
+            navigate("/RestaurantForLogin");
         } catch (error) {
             console.error("Submit error:", error);
             alert(error.message || "เกิดข้อผิดพลาดขณะส่งข้อมูล");

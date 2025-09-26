@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Store } from 'lucide-react';
 import { Link, useNavigate } from "react-router-dom";
 import axios from 'axios';
-import bgRes2 from './assets/bg/bgRes2.png';
+import bgRes2 from '../assets/bg/bgRes2.png';
 
 const RestaurantLogin = () => {
     const [email, setEmail] = useState('');

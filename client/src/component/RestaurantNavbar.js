@@ -7,7 +7,7 @@ function RestaurantNavbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const handleLogout = () => {
     localStorage.removeItem('restaurant');
-    window.location.href = '/RestaurantLogin';
+    window.location.href = '/RestaurantForLogin';
   };
 
   return (
