@@ -10,14 +10,14 @@ import { FaHome, FaMapMarkedAlt, FaSignInAlt } from "react-icons/fa";
 import Navbar from './component/navbar';
 import RestaurantNavbar from './component/RestaurantNavbar';
 import MainPage from './MainPage';
-import RestaurantRegist from './RestaurantsRegist';
-import RestaurantLogin from './RestaurantLogin';
+import RestaurantRegist from './Restaurants/RestaurantsRegist';
+import RestaurantLogin from './Restaurants/RestaurantLogin';
 import UserRegist from './UserRegist';
 import UserLogin from './UserLogin';
 import RestaurantDetail from './RestaurantDetail';
 import CompareRestaurant from './CompareRestaurant';
 import ResBooking from './ResBooking'
-import RestaurantMainPage from './RestaurantMainPage'
+import RestaurantMainPage from './Restaurants/RestaurantMainPage'
 import EditProfile from './EditProfile'
 import RestaurantMap from './component/RestaurantMap';
 import AllRestaurantsMap from './component/AllRestaurantsMap';
