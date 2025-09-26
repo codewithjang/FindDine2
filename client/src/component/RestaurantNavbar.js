@@ -7,13 +7,13 @@ function RestaurantNavbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const handleLogout = () => {
     localStorage.removeItem('restaurant');
-    window.location.href = '/RestaurantForLogin';
+    window.location.href = '/RestaurantLogin';
   };
 
   return (
     <nav className="w-full bg-orange-600 text-white flex justify-between items-center px-8 py-3 shadow-md relative">
       {/* Logo */}
-      <Link to="/RestaurantMainPage" className="flex items-center">
+      <Link to="/RestaurantForMainPage" className="flex items-center">
         <img src={logo} alt="FindDine Logo" className="h-8 w-auto" />
       </Link>
 

@@ -117,14 +117,14 @@ export default function Navbar() {
                       </Link>
                       <hr className="my-1" />
                       <Link
-                        to="/RestaurantForRegist"
+                        to="/RestaurantRegist"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
                         onClick={() => setShowUserMenu(false)}
                       >
                         ลงทะเบียนร้านอาหาร
                       </Link>
                       <Link
-                        to="/RestaurantForLogin"
+                        to="/RestaurantLogin"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
                         onClick={() => setShowUserMenu(false)}
                       >เข้าสู่ระบบร้านอาหาร</Link>

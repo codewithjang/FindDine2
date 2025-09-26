@@ -296,7 +296,7 @@ export default function RestaurantRegistration() {
             }
 
             alert("ลงทะเบียนร้านอาหารเรียบร้อย!");
-            navigate("/RestaurantForLogin");
+            navigate("/RestaurantLogin");
         } catch (error) {
             console.error("Submit error:", error);
             alert(error.message || "เกิดข้อผิดพลาดขณะส่งข้อมูล");

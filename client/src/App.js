@@ -112,8 +112,8 @@ function Layout() {
           </div>
         } />
         <Route path="/main_page" element={<MainPage />} />
-        <Route path="/RestaurantForRegist" element={<RestaurantRegist />} />
-        <Route path="/RestaurantForLogin" element={<RestaurantLogin />} />
+        <Route path="/RestaurantRegist" element={<RestaurantRegist />} />
+        <Route path="/RestaurantLogin" element={<RestaurantLogin />} />
         <Route path="/UserRegist" element={<UserRegist />} />
         <Route path="/UserLogin" element={<UserLogin />} />
         <Route path="/RestaurantDetail/:id" element={<RestaurantDetail />} />
