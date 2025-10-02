@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMap, useMapEvent } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -10,13 +10,21 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
+
 // Component สำหรับอัพเดทตำแหน่งแผนที่
-function MapUpdater({ position }) {
+function MapUpdater({ position, onMapClick }) {
     const map = useMap();
 
     useEffect(() => {
         map.setView(position, 15);
     }, [map, position]);
+
+    // เพิ่ม event สำหรับคลิกบนแผนที่
+    useMapEvent('click', (e) => {
+        if (onMapClick) {
+            onMapClick([e.latlng.lat, e.latlng.lng]);
+        }
+    });
 
     return null;
 }
@@ -106,12 +114,19 @@ export default function MapPicker({ setCoordinates }) {
         setHasChanged(true); // มีการเปลี่ยนแปลงตำแหน่ง
     };
 
+
     // จัดการการลาก marker
     const handleMarkerDrag = (e) => {
         const latlng = e.target.getLatLng();
         const newPos = [latlng.lat, latlng.lng];
         setPosition(newPos);
         setHasChanged(true); // มีการเปลี่ยนแปลงตำแหน่ง
+    };
+
+    // จัดการการคลิกบนแผนที่เพื่อย้าย marker
+    const handleMapClick = (latlngArr) => {
+        setPosition(latlngArr);
+        setHasChanged(true);
     };
 
     // ยืนยันตำแหน่ง
@@ -233,7 +248,7 @@ export default function MapPicker({ setCoordinates }) {
                     </p>
                 )}
                 <p className="text-xs text-gray-500 mt-1">
-                    * คุณสามารถลากตัว marker เพื่อปรับตำแหน่งได้
+                    * คุณสามารถคลิก หรือ ลากตัว marker เพื่อปรับตำแหน่งได้
                 </p>
             </div>
 
@@ -249,7 +264,7 @@ export default function MapPicker({ setCoordinates }) {
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
-                    <MapUpdater position={position} />
+                    <MapUpdater position={position} onMapClick={handleMapClick} />
                     <Marker
                         position={position}
                         draggable={true}
@@ -298,7 +313,7 @@ export default function MapPicker({ setCoordinates }) {
                 <h4 className="text-sm font-medium text-blue-800 mb-2">วิธีใช้งาน:</h4>
                 <ul className="text-xs text-blue-700 space-y-1">
                     <li>• พิมพ์ชื่อสถานที่ในช่องค้นหา ระบบจะย้าย marker ไปยังตำแหน่งนั้นอัตโนมัติ</li>
-                    <li>• หาก marker ไม่ถูกจุด คุณสามารถลากเพื่อปรับตำแหน่งเพิ่มเติมได้</li>
+                    <li>• หาก marker ไม่ถูกจุด คุณสามารถคลิก หรือ ลากเพื่อปรับตำแหน่งเพิ่มเติมได้</li>
                     <li>• เมื่อพอใจกับตำแหน่งแล้ว กด <strong>"ยืนยันตำแหน่ง"</strong> เพื่อส่งข้อมูลไปยังฟอร์ม</li>
                     <li>• สามารถกด <strong>"ยกเลิก"</strong> เพื่อกลับไปยังตำแหน่งที่ยืนยันล่าสุด</li>
                 </ul>
