@@ -4,7 +4,20 @@ import { FaBell, FaUserCircle, FaSignOutAlt, FaEdit } from "react-icons/fa";
 import logo from '../assets/logo/whiteLogo.png';
 
 function RestaurantNavbar() {
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  // Get restaurant id from localStorage
+  let restaurantId = '';
+  try {
+    const restaurantData = localStorage.getItem('restaurant');
+    if (restaurantData) {
+      const parsed = JSON.parse(restaurantData);
+      restaurantId = parsed.id || '';
+    }
+  } catch (e) {
+    restaurantId = '';
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('restaurant');
     window.location.href = '/RestaurantLogin';
@@ -13,7 +26,7 @@ function RestaurantNavbar() {
   return (
     <nav className="w-full bg-orange-600 text-white flex justify-between items-center px-8 py-3 shadow-md relative">
       {/* Logo */}
-      <Link to="/RestaurantForMainPage" className="flex items-center">
+      <Link to={`/RestaurantForMainPage/${restaurantId}`} className="flex items-center">
         <img src={logo} alt="FindDine Logo" className="h-8 w-auto" />
       </Link>
 
