@@ -5,22 +5,94 @@ import { Star, MapPin } from 'lucide-react';
 import logo from '../assets/logo/whiteLogo.png';
 
 export default function Navbar() {
-  const [searchQuery, setSearchQuery] = useState('');
+  // All useState at the top
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const isLoggedIn = Boolean(localStorage.getItem('token'));
+
+  // Fetch user profile when showUserMenu opens and user is logged in
+  React.useEffect(() => {
+    if (showUserMenu && isLoggedIn) {
+      setProfileLoading(true);
+      setProfileError(null);
+      try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const userObj = JSON.parse(userStr);
+          const userId = userObj.id;
+          fetch(`http://localhost:3001/api/users/${userId}`)
+            .then(res => {
+              if (!res.ok) throw new Error('Failed to fetch user profile');
+              return res.json();
+            })
+            .then(data => {
+              setUserProfile(data);
+              setProfileLoading(false);
+            })
+            .catch(err => {
+              setProfileError('ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
+              setProfileLoading(false);
+            });
+        }
+      } catch {
+        setProfileError('ไม่สามารถโหลดข้อมูลผู้ใช้ได้');
+        setProfileLoading(false);
+      }
+    }
+  }, [showUserMenu, isLoggedIn]);
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/';
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Handle search functionality
-      console.log('Searching for:', searchQuery);
+      try {
+        const res = await fetch(`http://localhost:3001/api/restaurants?search=${encodeURIComponent(searchQuery)}`);
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+        localStorage.setItem('searchResults', JSON.stringify(data));
+        window.location.href = `/main_page?search=${encodeURIComponent(searchQuery)}`;
+      } catch (err) {
+        alert('เกิดข้อผิดพลาดในการค้นหา');
+      }
     }
+  };
+
+  // Autocomplete: fetch suggestions as user types
+  const handleInputChange = async (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (value.trim().length === 0) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:3001/api/restaurants?search=${encodeURIComponent(value)}`);
+      if (!res.ok) throw new Error('Suggest failed');
+      const data = await res.json();
+      // Show only top 5 suggestions by name
+      setSuggestions(data.slice(0, 5));
+      setShowSuggestions(true);
+    } catch {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (name) => {
+    setSearchQuery(name);
+    setSuggestions([]);
+    setShowSuggestions(false);
   };
 
   return (
@@ -30,13 +102,20 @@ export default function Navbar() {
           {/* Left Side - Logo + Navigation */}
           <div className="flex items-center space-x-6">
             {/* Logo */}
-            <Link to="/main_page" className="flex items-center">
+            <a
+              href="/main_page"
+              className="flex items-center"
+              onClick={e => {
+                e.preventDefault();
+                window.location.href = '/main_page';
+              }}
+            >
               <img
                 src={logo}
                 alt="FindDine Logo"
                 className="h-8 w-auto"
               />
-            </Link>
+            </a>
             {/* รีวิว */}
             <a
               href="/reviews"
@@ -63,11 +142,27 @@ export default function Navbar() {
                   type="text"
                   placeholder="ค้นหาร้านอาหาร..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleInputChange}
+                  onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
                   className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  autoComplete="off"
                 />
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                {showSuggestions && suggestions.length > 0 && (
+                  <ul className="absolute left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-56 overflow-y-auto">
+                    {suggestions.map((item, idx) => (
+                      <li
+                        key={item.id || idx}
+                        className="px-4 py-2 cursor-pointer hover:bg-orange-100 text-gray-800"
+                        onMouseDown={() => handleSuggestionClick(item.restaurantName || item.name || '')}
+                      >
+                        {item.restaurantName || item.name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
 
@@ -81,9 +176,16 @@ export default function Navbar() {
               </button>
 
               {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 border">
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-md shadow-lg py-2 z-50 border">
                   {isLoggedIn ? (
                     <>
+                      <Link
+                        to="/UserProfile"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 border-b mb-1"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        โปรไฟล์
+                      </Link>
                       <Link
                         to="/EditProfile"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
