@@ -35,12 +35,16 @@ import {
     ChevronLeft,
     ChevronRight
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 export default function RestaurantDashboard() {
+    const { id } = useParams();
+    const restaurantId = id;
     const [activeTab, setActiveTab] = useState('overview');
     const [showPostModal, setShowPostModal] = useState(false);
     const [postContent, setPostContent] = useState('');
     const [postType, setPostType] = useState('general'); // general, menu, promotion
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     // Mock data สำหรับโพสต์
     const [posts, setPosts] = useState([
         {
@@ -102,11 +106,18 @@ export default function RestaurantDashboard() {
     // ดึงข้อมูลร้านอาหารจาก backend ทุกครั้งที่ component mount
     const [restaurant, setRestaurant] = useState(null);
     useEffect(() => {
-        axios.get('http://localhost:3001/api/restaurants/1')
+        if (!restaurantId) {
+            console.log('No restaurantId found');
+            return;
+        }
+        console.log('Fetching restaurantId:', restaurantId);
+        setLoading(true);
+        setError(null);
+        axios.get(`http://localhost:3001/api/restaurants/${restaurantId}`)
             .then(res => {
                 // Ensure all array fields are always arrays
                 const data = res.data;
-                setRestaurant({
+                const restaurantObj = {
                     ...data,
                     photos: Array.isArray(data.photos) ? data.photos : (data.photos ? JSON.parse(data.photos) : []),
                     lifestyles: Array.isArray(data.lifestyles) ? data.lifestyles : (data.lifestyles ? JSON.parse(data.lifestyles) : []),
@@ -115,9 +126,12 @@ export default function RestaurantDashboard() {
                     menuHighlights: Array.isArray(data.menuHighlights) ? data.menuHighlights : (data.menuHighlights ? JSON.parse(data.menuHighlights) : []),
                     reviews: Array.isArray(data.reviews) ? data.reviews : (data.reviews ? JSON.parse(data.reviews) : []),
                     facilities: Array.isArray(data.facilities) ? data.facilities : (data.facilities ? JSON.parse(data.facilities) : []),
-                });
+                };
+                setRestaurant(restaurantObj);
+                console.log('Restaurant data from backend:', restaurantObj);
             })
-            .catch(() => {
+            .catch((err) => {
+                console.error('Error fetching restaurant:', err);
                 // fallback mock data
                 setRestaurant({
                     id: 1,
