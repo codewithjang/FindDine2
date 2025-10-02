@@ -1,14 +1,102 @@
 const Restaurant = require('../models/restaurant');
 
+
+// Mapping tables
+const foodTypeOptions = [
+  { value: "thai", label: "อาหารไทย" },
+  { value: "chinese", label: "อาหารจีน" },
+  { value: "japanese", label: "อาหารญี่ปุ่น" },
+  { value: "korean", label: "อาหารเกาหลี" },
+  { value: "vietnamese", label: "อาหารเวียดนาม" },
+  { value: "indian", label: "อาหารอินเดีย" },
+  { value: "malaysian", label: "อาหารมาเลย์" },
+  { value: "indonesian", label: "อาหารอินโดนีเซีย" },
+  { value: "filipino", label: "อาหารฟิลิปปินส์" },
+  { value: "western", label: "อาหารตะวันตก" },
+  { value: "italian", label: "อาหารอิตาเลียน" },
+  { value: "french", label: "อาหารฝรั่งเศส" },
+  { value: "mexican", label: "อาหารแม็กซิกัน" },
+  { value: "middle-eastern", label: "อาหารตะวันออกกลาง" },
+  { value: "halal", label: "อาหารฮาลาล" },
+  { value: "vegetarian", label: "อาหารมังสวิรัติ" },
+  { value: "vegan", label: "อาหารเจ" },
+  { value: "fast-food", label: "อาหารจานด่วน" },
+  { value: "seafood", label: "อาหารทะเล" },
+  { value: "dessert", label: "ของหวาน / เบเกอรี่" },
+  { value: "cafe", label: "ร้านกาแฟ" },
+  { value: "street-food", label: "อาหารริมทาง" },
+  { value: "fusion", label: "อาหารผสมผสาน" },
+  { value: "bbq", label: "บาร์บีคิว / ปิ้งย่าง" }
+];
+const facilitiesOptions = [
+  { id: 'parking_space', label: 'ที่จอดรถ' },
+  { id: 'wifi_available', label: 'มี Wi-Fi' },
+  { id: 'work_space_available', label: 'พื้นที่ทำงาน' },
+  { id: 'pet_friendly', label: 'เป็นมิตรกับสัตว์เลี้ยง' },
+  { id: 'kids_area', label: 'โซนสำหรับเด็ก' }
+];
+const paymentOptionsData = [
+  { id: 'accepts_bank_payment', label: 'รับชำระผ่านธนาคาร' },
+  { id: 'accepts_credit_card', label: 'รับบัตรเครดิต' }
+];
+const serviceOptionsData = [
+  { id: 'accepts_reservation', label: 'รับการจอง' }
+];
+const locationStylesData = [
+  { id: 'in_city', label: 'ในเมือง' },
+  { id: 'sea_view', label: 'วิวทะเล' },
+  { id: 'natural_style', label: 'สไตล์ธรรมชาติ' }
+];
+const lifestylesData = [
+  { id: 'halal', label: 'ฮาลาล' },
+  { id: 'vegan_option', label: 'มังสวิรัติ/วีแกน' }
+];
+
+function mapIdsToLabels(arr, options, key = 'id', labelKey = 'label') {
+  if (!Array.isArray(arr)) return [];
+  return arr.map(id => {
+    const found = options.find(opt => opt[key] === id || opt.value === id);
+    return found ? found[labelKey] : id;
+  });
+}
+
+function parseArrayField(field) {
+  if (Array.isArray(field)) return field;
+  if (typeof field === 'string') {
+    try {
+      return JSON.parse(field);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function transformRestaurant(r) {
+  return {
+    ...r,
+    foodTypeLabel: mapIdsToLabels([r.foodType], foodTypeOptions, 'value', 'label')[0],
+    facilitiesLabel: mapIdsToLabels(parseArrayField(r.facilities), facilitiesOptions),
+    paymentOptionsLabel: mapIdsToLabels(parseArrayField(r.paymentOptions), paymentOptionsData),
+    serviceOptionsLabel: mapIdsToLabels(parseArrayField(r.serviceOptions), serviceOptionsData),
+    locationStylesLabel: mapIdsToLabels(parseArrayField(r.locationStyles), locationStylesData),
+    lifestylesLabel: mapIdsToLabels(parseArrayField(r.lifestyles), lifestylesData),
+  };
+}
+
 exports.getAll = async (req, res) => {
   const restaurants = await Restaurant.findAll();
-  res.json(restaurants);
+  // แปลงข้อมูลทุกตัวก่อนส่งออก
+  const transformed = restaurants.map(r => transformRestaurant(r));
+  res.json(transformed);
 };
 
 exports.getById = async (req, res) => {
   const restaurant = await Restaurant.findById(Number(req.params.id));
   if (!restaurant) return res.status(404).json({ error: 'Not found' });
-  res.json(restaurant);
+    const transformed = transformRestaurant(restaurant);
+    console.log('transformed restaurant:', transformed);
+    res.json(transformed);
 };
 
 exports.create = async (req, res) => {
