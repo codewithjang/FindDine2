@@ -667,7 +667,7 @@ export default function RestaurantRegistration() {
             <img
                 src={bgRes2}
                 alt="Background"
-                className="absolute inset-0 opacity-70 z-0"
+                className="absolute inset-0 w-full h-full object-cover opacity-70 z-0"
             />
             <div className="relative w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
                 {/* Close button */}

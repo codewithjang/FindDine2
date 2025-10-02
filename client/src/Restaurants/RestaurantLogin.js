@@ -39,12 +39,12 @@ const RestaurantLogin = () => {
     };
 
     return (
-        <div className="relative flex items-center justify-center min-h-screen bg-gradient-to-r from-black via-black to-gray-800 overflow-hidden">
-            <img
-                src={bgRes2}
-                alt="Background"
-                className="absolute inset-0 opacity-70 z-0"
-            />
+            <div className="relative flex items-center justify-center min-h-screen bg-gradient-to-r from-black via-black to-gray-800 overflow-hidden">
+                <img
+                    src={bgRes2}
+                    alt="Background"
+                    className="absolute inset-0 w-full h-full object-cover opacity-70 z-0"
+                />
             <div className="relative w-full max-w-md bg-white p-6 rounded-lg shadow-lg">
                 {/* Close button */}
                 <Link
