@@ -11,15 +11,95 @@ import {
   Car,
   CreditCard,
   Calendar,
-  Share,
+  Waves,
   Heart,
-  MessageCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Leaf
 } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import RestaurantMap from './component/RestaurantMap';
+
+// Map payment option label or id to icon component
+const getPaymentIcon = (labelOrId) => {
+  switch (labelOrId) {
+    case 'รับบัตรเครดิต':
+    case 'accepts_credit_card':
+      return <CreditCard className="w-4 h-4" />;
+    case 'รับชำระผ่านธนาคาร':
+    case 'accepts_bank_payment':
+      return <DollarSign className="w-4 h-4" />;
+    default:
+      return <DollarSign className="w-4 h-4" />;
+  }
+};
+
+// Map service option label or id to icon component
+const getServiceOptionIcon = (labelOrId) => {
+  switch (labelOrId) {
+    case 'รับการจอง':
+    case 'accepts_reservation':
+      return <Calendar className="w-4 h-4" />;
+    default:
+      return <Users className="w-4 h-4" />;
+  }
+};
+
+// Map location style label or id to icon component
+const getLocationStyleIcon = (labelOrId) => {
+  switch (labelOrId) {
+    case 'ในเมือง':
+    case 'in_city':
+      return <MapPin className="w-4 h-4" />;
+    case 'วิวทะเล':
+    case 'sea_view':
+      return <Waves className="w-4 h-4" />;
+    case 'สไตล์ธรรมชาติ':
+    case 'ธรรมชาติ':
+    case 'natural_style':
+      return <Leaf className="w-4 h-4" />;
+    default:
+      return <MapPin className="w-4 h-4" />;
+  }
+};
+
+// Map lifestyle label or id to icon component
+const getLifestyleIcon = (labelOrId) => {
+  switch (labelOrId) {
+    case 'ฮาลาล':
+    case 'halal':
+      return <Heart className="w-4 h-4 text-green-600" />;
+    case 'มังสวิรัติ/วีแกน':
+    case 'vegan_option':
+      return <Leaf className="w-4 h-4 text-green-600" />;
+    default:
+      return <Users className="w-4 h-4" />;
+  }
+};
+
+// Map facility label or id to icon component
+const getFacilityIcon = (labelOrId) => {
+  switch (labelOrId) {
+    case 'ที่จอดรถ':
+    case 'parking_space':
+      return <Car className="w-4 h-4" />;
+    case 'มี Wi-Fi':
+    case 'wifi_available':
+      return <Wifi className="w-4 h-4" />;
+    case 'พื้นที่ทำงาน':
+    case 'work_space_available':
+      return <Users className="w-4 h-4" />;
+    case 'เป็นมิตรกับสัตว์เลี้ยง':
+    case 'pet_friendly':
+      return <Heart className="w-4 h-4" />;
+    case 'โซนสำหรับเด็ก':
+    case 'kids_area':
+      return <Users className="w-4 h-4" />;
+    default:
+      return <Users className="w-4 h-4" />;
+  }
+};
 
 const RestaurantDetail = (props) => {
   const { id } = useParams();
@@ -49,7 +129,9 @@ const RestaurantDetail = (props) => {
           paymentOptions: Array.isArray(r.paymentOptions) ? r.paymentOptions : (r.paymentOptions ? JSON.parse(r.paymentOptions) : []),
           menuHighlights: Array.isArray(r.menuHighlights) ? r.menuHighlights : (r.menuHighlights ? JSON.parse(r.menuHighlights) : []),
           reviews: Array.isArray(r.reviews) ? r.reviews : (r.reviews ? JSON.parse(r.reviews) : []),
+          facilitiesLabel: r.facilitiesLabel,
         });
+        console.log('restaurant from backend:', r);
         setLoading(false);
       })
       .catch((err) => {
@@ -219,30 +301,21 @@ const RestaurantDetail = (props) => {
 
               {/* Special Tags */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {restaurant.lifestyles && restaurant.lifestyles.includes && restaurant.lifestyles.includes('halal') && (
-                  <span className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium">
-                    Halal
+                {restaurant.lifestylesLabel && restaurant.lifestylesLabel.map && restaurant.lifestylesLabel.map((lifestyle, idx) => (
+                  <span key={idx} className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium flex items-center gap-1">
+                    {getLifestyleIcon(lifestyle)}
+                    {lifestyle}
                   </span>
-                )}
-                {restaurant.locationStyles && restaurant.locationStyles.map && restaurant.locationStyles.map((location, index) => (
-                  <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">
-                    {location === 'sea_view' ? 'วิวทะเล' : location === 'in_city' ? 'ในเมือง' : location === 'natural_style' ? 'ธรรมชาติ' : location}
+                ))}
+                {restaurant.locationStylesLabel && restaurant.locationStylesLabel.map && restaurant.locationStylesLabel.map((location, index) => (
+                  <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium flex items-center gap-1">
+                    {getLocationStyleIcon(location)}
+                    {location}
                   </span>
                 ))}
               </div>
 
               <p className="text-gray-700 leading-relaxed">{restaurant.description}</p>
-
-              {/* แผนที่ร้านอาหาร */}
-              {restaurant.latitude && restaurant.longitude && (
-                <div className="my-6">
-                  <RestaurantMap
-                    latitude={Number(restaurant.latitude)}
-                    longitude={Number(restaurant.longitude)}
-                    name={restaurant.restaurantName}
-                  />
-                </div>
-              )}
             </div>
 
             {/* Tabs */}
@@ -347,6 +420,16 @@ const RestaurantDetail = (props) => {
                 )}
               </div>
             </div>
+            {/* แผนที่ร้านอาหาร */}
+              {restaurant.latitude && restaurant.longitude && (
+                <div className="my-6">
+                  <RestaurantMap
+                    latitude={Number(restaurant.latitude)}
+                    longitude={Number(restaurant.longitude)}
+                    name={restaurant.restaurantName}
+                  />
+                </div>
+              )}
           </div>
 
           {/* Sidebar */}
@@ -355,38 +438,39 @@ const RestaurantDetail = (props) => {
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4">สิ่งอำนวยความสะดวก</h3>
               <div className="space-y-3">
-                {restaurant.serviceOptions && restaurant.serviceOptions.map && restaurant.serviceOptions.map((service, index) => (
+                {restaurant.facilitiesLabel && restaurant.facilitiesLabel.map && restaurant.facilitiesLabel.map((facility, index) => (
                   <div key={index} className="flex items-center space-x-3">
-                    {getServiceIcon(service)}
-                    <span className="text-gray-700">{getServiceLabel(service)}</span>
+                    {getFacilityIcon(facility)}
+                    <span className="text-gray-700">{facility}</span>
+                  </div>
+                ))}
+                {restaurant.paymentOptionsLabel && restaurant.paymentOptionsLabel.map && restaurant.paymentOptionsLabel.map((option, index) => (
+                  <div key={index} className="flex items-center space-x-3">
+                    {getPaymentIcon(option)}
+                    <span className="text-gray-700">{option}</span>
+                  </div>
+                ))}
+                {restaurant.serviceOptionsLabel && restaurant.serviceOptionsLabel.map && restaurant.serviceOptionsLabel.map((service, index) => (
+                  <div key={index} className="flex items-center space-x-3">
+                    {getServiceOptionIcon(service)}
+                    <span className="text-gray-700">{service}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Contact Actions */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">ติดต่อร้าน</h3>
-              <div className="space-y-3">
-                <button className="w-full bg-orange-300 text-white py-3 rounded-lg hover:bg-orange-400 transition-colors font-medium">
-                  <Phone className="w-4 h-4 inline mr-2" />
-                  โทรหาร้าน
-                </button>
-
-                <button className="w-full bg-orange-500 text-white py-3 rounded-lg hover:bg-orange-600 transition-colors font-medium">
-                  <MessageCircle className="w-4 h-4 inline mr-2" />
-                  ส่งข้อความ
-                </button>
-
+            {Array.isArray(restaurant.serviceOptions) && restaurant.serviceOptions.includes('accepts_reservation') && (
+              <div>
                 <Link
                   to="/ResBooking"
-                  className="block w-full bg-orange-700 text-white py-3 rounded-lg hover:bg-orange-800 transition-colors font-medium text-center"
+                  className="block w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-800 transition-colors font-medium text-center"
                 >
                   <Calendar className="w-4 h-4 inline mr-2" />
                   จองโต๊ะ
                 </Link>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

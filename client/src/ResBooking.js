@@ -217,7 +217,7 @@ const RestaurantBooking = ({ restaurantId}) => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <div className="bg-white shadow-sm sticky top-0 z-10">
+            <div className="sticky top-0 z-10">
                 <div className="max-w-4xl mx-auto px-4 py-4">
                     <div className="flex items-center justify-between">
                         <button
@@ -227,8 +227,6 @@ const RestaurantBooking = ({ restaurantId}) => {
                             <ArrowLeft className="w-5 h-5" />
                             <span>กลับ</span>
                         </button>
-                        <h1 className="text-xl font-bold text-gray-800">จองโต๊ะ</h1>
-                        <div className="w-16"></div>
                     </div>
                 </div>
             </div>
