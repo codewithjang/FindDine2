@@ -17,7 +17,7 @@ const RestaurantLogin = () => {
                     .then(res => {
                         if (res.data.success) {
                             localStorage.setItem('restaurant', JSON.stringify(res.data.restaurant));
-                            navigate('/RestaurantForMainPage');
+                            navigate(`/RestaurantForMainPage/${res.data.restaurant.id}`);
                         } else {
                             setError(res.data.message || 'Login failed');
                         }
