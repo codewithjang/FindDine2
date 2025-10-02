@@ -92,8 +92,8 @@ export default function MainPage() {
             return Array.isArray(restaurant.lifestyles) && restaurant.lifestyles.includes('halal');
           case 'popular':
             return restaurant.rating >= 4.5;
-          case 'reservation':
-            return Array.isArray(restaurant.serviceOptions) && restaurant.serviceOptions.includes('accept_reservation');
+          case 'accepts_reservation':
+            return Array.isArray(restaurant.serviceOptions) && restaurant.serviceOptions.includes('accepts_reservation');
           case 'in_city':
             return Array.isArray(restaurant.locationStyles) && restaurant.locationStyles.includes('in_city');
           case 'sea_view':
@@ -539,17 +539,22 @@ export default function MainPage() {
 
                 {/* Action Buttons */}
                 <div className="flex space-x-2">
-                  <Link to={`/RestaurantDetail/${restaurant.id}`} className="flex-1 bg-orange-500 text-white py-2 px-4 rounded-lg hover:bg-orange-600 transition-colors font-medium">
+                  <Link
+                    to={`/RestaurantDetail/${restaurant.id}`}
+                    className="flex-1 flex items-center justify-center gap-1 bg-gray-100 text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-200 py-2 px-4 rounded-lg transition-colors font-medium text-center"
+                    style={{ minWidth: 0 }}
+                  >
                     ดูรายละเอียด
                   </Link>
                   <button
                     onClick={() => handleCompare(restaurant.id)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${compareList.includes(restaurant.id)
+                    className={`flex-1 flex items-center justify-center gap-1 py-2 px-4 rounded-lg font-medium transition-colors text-center border border-orange-600 shadow-md ${compareList.includes(restaurant.id)
                       ? 'bg-orange-100 text-orange-600 border-2 border-orange-300'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-orange-500 text-white hover:bg-orange-600'
                       }`}
+                    style={{ minWidth: 0 }}
                   >
-                    <GitCompare className="w-4 h-4" />
+                    <GitCompare className="w-4 h-4" />เปรียบเทียบ
                   </button>
                 </div>
               </div>
