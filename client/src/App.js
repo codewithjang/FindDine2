@@ -12,14 +12,15 @@ import RestaurantNavbar from './component/RestaurantNavbar';
 import MainPage from './MainPage';
 import RestaurantRegist from './Restaurants/RestaurantsRegist';
 import RestaurantLogin from './Restaurants/RestaurantLogin';
-import UserRegist from './UserRegist';
-import UserLogin from './UserLogin';
+import UserRegist from './User/UserRegist';
+import UserLogin from './User/UserLogin';
 import RestaurantDetail from './RestaurantDetail';
 import CompareRestaurant from './CompareRestaurant';
 import ResBooking from './ResBooking'
 import RestaurantMainPage from './Restaurants/RestaurantMainPage'
-import EditProfile from './EditProfile'
+import EditProfile from './User/EditProfile'
 import RestaurantMap from './component/RestaurantMap';
+import UserProfile from './User/UserProfile';
 import AllRestaurantsMap from './component/AllRestaurantsMap';
 
 function Layout() {
@@ -119,8 +120,9 @@ function Layout() {
         <Route path="/RestaurantDetail/:id" element={<RestaurantDetail />} />
         <Route path="/CompareRestaurant" element={<CompareRestaurant />} />
         <Route path="/ResBooking" element={<ResBooking />} />
-        <Route path="/RestaurantForMainPage" element={<RestaurantMainPage />} />
+        <Route path="/RestaurantForMainPage/:id" element={<RestaurantMainPage />} />
         <Route path="/EditProfile" element={<EditProfile />} />
+        <Route path="/UserProfile" element={<UserProfile />} />
         <Route path="/RestaurantMap" element={<RestaurantMap />} />
         <Route path="/AllRestaurantsMap" element={<AllRestaurantsMap />} />
       </Routes>
