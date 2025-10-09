@@ -11,20 +11,23 @@ const RestaurantLogin = () => {
     const navigate = useNavigate();
 
     const handleSubmit = (e) => {
-                e.preventDefault();
-                setError('');
-                axios.post('http://localhost:3001/api/restaurants/login', { email, password })
-                    .then(res => {
-                        if (res.data.success) {
-                            localStorage.setItem('restaurant', JSON.stringify(res.data.restaurant));
-                            navigate(`/RestaurantForMainPage/${res.data.restaurant.id}`);
-                        } else {
-                            setError(res.data.message || 'Login failed');
-                        }
-                    })
-                    .catch(err => {
-                        setError(err.response?.data?.message || 'เกิดข้อผิดพลาด');
-                    });
+        e.preventDefault();
+        setError('');
+        axios.post('http://localhost:3001/api/restaurants/login', { email, password })
+            .then(res => {
+                if (res.data.success) {
+                    localStorage.setItem('restaurant', JSON.stringify(res.data.restaurant));
+                    if (res.data.token) {
+                        localStorage.setItem('token', res.data.token);
+                    }
+                    navigate(`/RestaurantForMainPage/${res.data.restaurant.id}`);
+                } else {
+                    setError(res.data.message || 'Login failed');
+                }
+            })
+            .catch(err => {
+                setError(err.response?.data?.message || 'เกิดข้อผิดพลาด');
+            });
     };
 
     const handleGoogleLogin = () => {
