@@ -49,9 +49,12 @@ export default function MapPicker({ setCoordinates }) {
 
         setLoading(true);
         try {
+            // ✅ เรียกผ่าน backend แทน
             const res = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1&countrycodes=th`
+                `http://localhost:3001/api/map/search?q=${encodeURIComponent(query)}`
             );
+
+            if (!res.ok) throw new Error('API request failed');
             const data = await res.json();
 
             const formattedSuggestions = data.map(item => ({
@@ -281,8 +284,8 @@ export default function MapPicker({ setCoordinates }) {
                     onClick={confirmPosition}
                     disabled={!isPositionChanged}
                     className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${isPositionChanged
-                            ? 'bg-green-500 hover:bg-green-600 text-white cursor-pointer'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        ? 'bg-green-500 hover:bg-green-600 text-white cursor-pointer'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                 >
                     <div className="flex items-center justify-center gap-2">
