@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import logo from './assets/logo/logo.png';
+import RestaurantForEdit from './Restaurants/RestaurantForEdit';
 import ResImage from './assets/bg/Bg1.png';
 import { Link } from 'react-router-dom';
 import { FaHome, FaMapMarkedAlt, FaSignInAlt } from "react-icons/fa";
@@ -125,6 +126,7 @@ function Layout() {
         <Route path="/UserProfile" element={<UserProfile />} />
         <Route path="/RestaurantMap" element={<RestaurantMap />} />
         <Route path="/AllRestaurantsMap" element={<AllRestaurantsMap />} />
+        <Route path="/RestaurantForEdit/:id" element={<RestaurantForEdit />} />
       </Routes>
     </>
   );
