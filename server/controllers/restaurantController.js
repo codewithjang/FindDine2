@@ -84,6 +84,7 @@ function transformRestaurant(r) {
   };
 }
 
+
 exports.getAll = async (req, res) => {
   const restaurants = await Restaurant.findAll();
   // แปลงข้อมูลทุกตัวก่อนส่งออก
@@ -94,9 +95,9 @@ exports.getAll = async (req, res) => {
 exports.getById = async (req, res) => {
   const restaurant = await Restaurant.findById(Number(req.params.id));
   if (!restaurant) return res.status(404).json({ error: 'Not found' });
-    const transformed = transformRestaurant(restaurant);
-    console.log('transformed restaurant:', transformed);
-    res.json(transformed);
+  const transformed = transformRestaurant(restaurant);
+  console.log('transformed restaurant:', transformed);
+  res.json(transformed);
 };
 
 exports.create = async (req, res) => {
@@ -105,9 +106,34 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-  const restaurant = await Restaurant.update(Number(req.params.id), req.body);
-  res.json(restaurant);
+  try {
+    const id = Number(req.params.id);
+    let data = req.body;
+
+    // ✅ ลบ field ที่ Prisma ไม่รู้จัก
+    const invalidKeys = [
+      'id', 'createdAt', 'updatedAt',
+      'foodTypeLabel', 'facilitiesLabel',
+      'paymentOptionsLabel', 'serviceOptionsLabel',
+      'locationStylesLabel', 'lifestylesLabel'
+    ];
+    invalidKeys.forEach(k => delete data[k]);
+
+    // ✅ แปลงค่าที่ควรเป็นตัวเลข
+    if (data.startingPrice) data.startingPrice = parseInt(data.startingPrice, 10);
+    if (data.latitude) data.latitude = parseFloat(data.latitude);
+    if (data.longitude) data.longitude = parseFloat(data.longitude);
+
+    const restaurant = await Restaurant.update(id, data);
+    res.status(200).json(restaurant);
+
+  } catch (error) {
+    console.error('❌ update restaurant error:', error);
+    res.status(500).json({ error: error.message });
+  }
 };
+
+
 
 exports.delete = async (req, res) => {
   await Restaurant.delete(Number(req.params.id));
