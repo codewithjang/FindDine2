@@ -507,12 +507,14 @@ export default function MainPage() {
                   <h3 className="text-xl font-bold text-gray-800 line-clamp-1">
                     {restaurant.restaurantName}
                   </h3>
-                  <div className="flex items-center space-x-1">
-                    {renderStars(restaurant.rating)}
-                    <span className="text-sm text-gray-600 ml-1">
-                      ({restaurant.rating})
-                    </span>
-                  </div>
+                  {restaurant.rating > 0 && (
+                    <div className="flex items-center space-x-1">
+                      {renderStars(restaurant.rating)}
+                      <span className="text-sm text-gray-600 ml-1">
+                        ({restaurant.rating})
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <p className="text-gray-600 mb-3">{restaurant.foodType}</p>
