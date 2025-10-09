@@ -15,19 +15,19 @@ model restaurant {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   email          String   @unique(map: "Restaurant_email_key")
-  facilities     String?  @db.LongText
+  facilities     Json?    
   foodType       String
   latitude       Float?
-  lifestyles     String?  @db.LongText
-  locationStyles String?  @db.LongText
+  lifestyles     Json?     
+  locationStyles Json?     
   longitude      Float?
   nearbyPlaces   String?
   password       String
-  paymentOptions String?  @db.LongText
-  photos         String?  @db.LongText
-  priceRange     String?  @db.VarChar(50)
+  paymentOptions Json?     
+  photos         Json?    
+  priceRange     String?   @db.VarChar(50)
   restaurantName String
-  serviceOptions String?  @db.LongText
+  serviceOptions Json?    
   startingPrice  Int?
 }
 
