@@ -113,10 +113,11 @@ export default function RestaurantDashboard() {
         console.log('Fetching restaurantId:', restaurantId);
         setLoading(true);
         setError(null);
-        axios.get(`http://localhost:3001/api/restaurants/${restaurantId}`)
+        const token = localStorage.getItem('token');
+        axios.get(`http://localhost:3001/api/restaurants/${restaurantId}`, token ? { headers: { Authorization: `Bearer ${token}` } } : {})
             .then(res => {
-                // Ensure all array fields are always arrays
-                const data = res.data;
+                // Handle both array/object response
+                const data = Array.isArray(res.data) ? res.data[0] : res.data;
                 const restaurantObj = {
                     ...data,
                     photos: Array.isArray(data.photos) ? data.photos : (data.photos ? JSON.parse(data.photos) : []),
