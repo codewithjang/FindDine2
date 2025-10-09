@@ -3,17 +3,30 @@
 // import bcrypt from "bcrypt";
 // import { PrismaClient } from "@prisma/client";
 // import 'dotenv/config';
-
-// server/index.js
+// ===== โหลดโมดูลก่อน =====
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
+const bodyParser = require('body-parser');
 const { PrismaClient } = require('@prisma/client');
 
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3001;
+
+// ✅ เปิด CORS ก่อนทุกอย่าง
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// ✅ Routes
+const restaurantRoutes = require('./routes/restaurant');
+const mapRoutes = require('./routes/map');
 
 // ==== uploads setup (วางบน ๆ ไฟล์) ====
 const path = require("path");
@@ -59,13 +72,14 @@ app.get('/', (req, res) => {
   res.send('FindDine Backend API is running!');
 });
 
-const restaurantRoutes = require('./routes/restaurant');
+// const restaurantRoutes = require('./routes/restaurant');
 const userRoutes = require('./routes/user');
 const bookingRoutes = require('./routes/booking');
 
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/api/map', mapRoutes);
 
 // app.listen(PORT, () => {
 //   console.log(`Server running on port ${PORT}`);
