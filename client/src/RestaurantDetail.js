@@ -232,11 +232,15 @@ const RestaurantDetail = (props) => {
         {/* Image Gallery */}
         <div className="relative h-96 rounded-2xl overflow-hidden mb-6">
           <img
-            src={restaurant.photos && restaurant.photos.length > 0 ? (restaurant.photos[0].photoUrl || restaurant.photos[0].url) : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'}
+            src={
+              restaurant.photos && restaurant.photos.length > 0
+                ? restaurant.photos[currentImageIndex]?.photoUrl ||
+                restaurant.photos[currentImageIndex]?.url
+                : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'
+            }
             alt={restaurant.restaurantName}
             className="w-full h-full object-cover"
           />
-
           {/* Navigation Arrows */}
           {restaurant.photos && restaurant.photos.length > 1 && (
             <>
@@ -421,15 +425,15 @@ const RestaurantDetail = (props) => {
               </div>
             </div>
             {/* แผนที่ร้านอาหาร */}
-              {restaurant.latitude && restaurant.longitude && (
-                <div className="my-6">
-                  <RestaurantMap
-                    latitude={Number(restaurant.latitude)}
-                    longitude={Number(restaurant.longitude)}
-                    name={restaurant.restaurantName}
-                  />
-                </div>
-              )}
+            {restaurant.latitude && restaurant.longitude && (
+              <div className="my-6">
+                <RestaurantMap
+                  latitude={Number(restaurant.latitude)}
+                  longitude={Number(restaurant.longitude)}
+                  name={restaurant.restaurantName}
+                />
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
