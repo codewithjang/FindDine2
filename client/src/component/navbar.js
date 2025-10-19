@@ -117,26 +117,27 @@ export default function Navbar() {
               />
             </a>
             {/* รีวิว */}
-            <a
-              href="/reviews"
-              className="flex items-center text-white hover:text-orange-200 font-medium transition-colors"
+            <Link
+              to="/reviews"
+              className="hidden md:flex flex items-center space-x-1 text-white hover:text-orange-200 font-medium transition-colors"
             >
-              <Star className="h-5 w-5 mr-1" />
+              <Star className="h-5 w-5" />
               <span>รีวิว</span>
-            </a>
+            </Link>
+
             {/* แผนที่ */}
             <Link
               to="/AllRestaurantsMap"
-              className="flex items-center text-white hover:text-orange-200 font-medium transition-colors"
+              className="hidden md:flex flex items-center space-x-1 text-white hover:text-orange-200 font-medium transition-colors"
             >
-              <MapPin className="h-5 w-5 mr-1" />
+              <MapPin className="h-5 w-5" />
               <span>แผนที่</span>
             </Link>
           </div>
           {/* Right Side - Search and Profile */}
           <div className="flex items-center space-x-2">
             {/* Search Bar */}
-            <div className="hidden sm:flex items-center">
+            <div className="hidden md:flex items-center">
               <div className="relative">
                 <input
                   type="text"
@@ -170,7 +171,7 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center space-x-1 text-gray-700 hover:text-orange-500 transition-colors"
+                className="flex items-center space-x-1 text-white hover:text-orange-500 transition-colors"
               >
                 <CircleUserRound className="h-8 w-8 text-white hover:text-orange-200" />
               </button>
@@ -239,7 +240,7 @@ export default function Navbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="md:hidden text-gray-700 hover:text-orange-500"
+              className="md:hidden text-white hover:text-orange-500"
             >
               {showMobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -268,7 +269,7 @@ export default function Navbar() {
               <a href="/reviews" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-orange-500">
                 รีวิว
               </a>
-              <a href="/map" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-orange-500">
+              <a href="/AllRestaurantsMap" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-orange-500">
                 แผนที่
               </a>
             </div>
