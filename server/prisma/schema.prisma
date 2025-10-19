@@ -1,3 +1,8 @@
+// ------------------------------------------------------
+// Prisma Schema for FindDine Backend
+// Database: MySQL
+// ------------------------------------------------------
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,29 +12,68 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ------------------------------------------------------
+// 🧩 MODEL: restaurant
+// ------------------------------------------------------
+
 model restaurant {
-  id             Int      @id @default(autoincrement())
-  address        String
-  phone          String
-  description    String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  email          String   @unique(map: "Restaurant_email_key")
-  facilities     Json?    
-  foodType       String
-  latitude       Float?
-  lifestyles     Json?     
-  locationStyles Json?     
-  longitude      Float?
-  nearbyPlaces   String?
-  password       String
-  paymentOptions Json?     
-  photos         Json?    
-  priceRange     String?   @db.VarChar(50)
-  restaurantName String
-  serviceOptions Json?    
-  startingPrice  Int?
+  id               Int              @id @default(autoincrement())
+  restaurantName   String
+  foodType         String
+  email            String           @unique(map: "Restaurant_email_key")
+  password         String
+  address          String
+  phone            String
+  description      String?
+  latitude         Float?
+  longitude        Float?
+  nearbyPlaces     String?
+  facilities       String?          @db.LongText
+  paymentOptions   String?          @db.LongText
+  serviceOptions   String?          @db.LongText
+  locationStyles   String?          @db.LongText
+  lifestyles       String?          @db.LongText
+  photos           String?          @db.LongText
+  priceRange       String?          @db.VarChar(50)
+  startingPrice    Int?
+
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @default(now()) @updatedAt
+
+  // ✅ เชื่อมความสัมพันธ์แบบ one-to-one กับ bookingSetting
+  bookingSetting   bookingSetting?
+
+  @@map("restaurant")
 }
+
+// ------------------------------------------------------
+// 🧩 MODEL: bookingSetting (ตาราง BookingSetting จริงใน MySQL)
+// ------------------------------------------------------
+
+model bookingSetting {
+  id             Int         @id @default(autoincrement())
+  restaurantId   Int         @unique
+  allowBooking   Boolean     @default(true)
+  maxGuests      Int?
+  tableCount     Int?
+  advanceDays    Int?
+  holdMinutes    Int?
+  cancelBeforeHr Int?
+  openTime       String
+  closeTime      String
+  policyNotes    String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  // ✅ เชื่อมกับ restaurant.id
+  restaurant     restaurant  @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@map("BookingSetting") // ใช้ชื่อจริงในฐานข้อมูล (ตัว B ใหญ่)
+}
+
+// ------------------------------------------------------
+// 🧩 MODEL: user
+// ------------------------------------------------------
 
 model user {
   id        Int      @id @default(autoincrement())
