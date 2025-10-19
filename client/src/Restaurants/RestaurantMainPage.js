@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useEffect } from 'react';
 import axios from 'axios';
 import bg from '../assets/bg/bgMainRes.png';
+import RestaurantMap from '../component/RestaurantMap';
+import { Link, useParams } from 'react-router-dom';
 import {
     Bell,
     Calendar,
@@ -31,11 +33,91 @@ import {
     Share2,
     MoreHorizontal,
     Car,
+    Waves,
     Tag,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Leaf
 } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+// Map payment option label or id to icon component
+const getPaymentIcon = (labelOrId) => {
+    switch (labelOrId) {
+        case 'รับบัตรเครดิต':
+        case 'accepts_credit_card':
+            return <CreditCard className="w-4 h-4" />;
+        case 'รับชำระผ่านธนาคาร':
+        case 'accepts_bank_payment':
+            return <DollarSign className="w-4 h-4" />;
+        default:
+            return <DollarSign className="w-4 h-4" />;
+    }
+};
+
+// Map service option label or id to icon component
+const getServiceOptionIcon = (labelOrId) => {
+    switch (labelOrId) {
+        case 'รับการจอง':
+        case 'accepts_reservation':
+            return <Calendar className="w-4 h-4" />;
+        default:
+            return <Users className="w-4 h-4" />;
+    }
+};
+
+// Map location style label or id to icon component
+const getLocationStyleIcon = (labelOrId) => {
+    switch (labelOrId) {
+        case 'ในเมือง':
+        case 'in_city':
+            return <MapPin className="w-4 h-4" />;
+        case 'วิวทะเล':
+        case 'sea_view':
+            return <Waves className="w-4 h-4" />;
+        case 'สไตล์ธรรมชาติ':
+        case 'ธรรมชาติ':
+        case 'natural_style':
+            return <Leaf className="w-4 h-4" />;
+        default:
+            return <MapPin className="w-4 h-4" />;
+    }
+};
+
+// Map lifestyle label or id to icon component
+const getLifestyleIcon = (labelOrId) => {
+    switch (labelOrId) {
+        case 'ฮาลาล':
+        case 'halal':
+            return <Heart className="w-4 h-4 text-green-600" />;
+        case 'มังสวิรัติ/วีแกน':
+        case 'vegan_option':
+            return <Leaf className="w-4 h-4 text-green-600" />;
+        default:
+            return <Users className="w-4 h-4" />;
+    }
+};
+
+// Map facility label or id to icon component
+const getFacilityIcon = (labelOrId) => {
+    switch (labelOrId) {
+        case 'ที่จอดรถ':
+        case 'parking_space':
+            return <Car className="w-4 h-4" />;
+        case 'มี Wi-Fi':
+        case 'wifi_available':
+            return <Wifi className="w-4 h-4" />;
+        case 'พื้นที่ทำงาน':
+        case 'work_space_available':
+            return <Users className="w-4 h-4" />;
+        case 'เป็นมิตรกับสัตว์เลี้ยง':
+        case 'pet_friendly':
+            return <Heart className="w-4 h-4" />;
+        case 'โซนสำหรับเด็ก':
+        case 'kids_area':
+            return <Users className="w-4 h-4" />;
+        default:
+            return <Users className="w-4 h-4" />;
+    }
+};
 export default function RestaurantDashboard() {
     const { id } = useParams();
     const restaurantId = id;
@@ -240,6 +322,20 @@ export default function RestaurantDashboard() {
         { id: 2, customer: 'Ms. Sarah', rating: 4, comment: 'Great halal food with amazing sea view!', time: '5 ชม. ที่แล้ว' }
     ];
 
+    // ตรวจสอบว่าร้านเปิดรับการจองหรือไม่
+    const hasReservation =
+        restaurant?.serviceOptions &&
+        (() => {
+            try {
+                const arr = Array.isArray(restaurant.serviceOptions)
+                    ? restaurant.serviceOptions
+                    : JSON.parse(restaurant.serviceOptions || "[]");
+                return arr.includes("accepts_reservation");
+            } catch {
+                return false;
+            }
+        })();
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white">
             {/* Header */}
@@ -268,7 +364,7 @@ export default function RestaurantDashboard() {
                         {[
                             { id: 'overview', label: 'ภาพรวม', icon: BarChart3 },
                             { id: 'posts', label: 'โพสต์', icon: FileText },
-                            { id: 'bookings', label: 'การจอง', icon: Calendar },
+                            ...(hasReservation ? [{ id: 'bookings', label: 'การจอง', icon: Calendar }] : []),
                             { id: 'reviews', label: 'รีวิว', icon: MessageSquare },
                             { id: 'profile', label: 'โปรไฟล์', icon: Edit }
                         ].map((tab) => (
@@ -581,44 +677,55 @@ export default function RestaurantDashboard() {
                     </div>
                 )}
 
+                {activeTab === 'bookings' && hasReservation && (
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex justify-center items-center gap-2">
+                                <Calendar className="w-5 h-5 text-orange-500" />
+                                การจองโต๊ะ
+                            </h3>
+                            <BookingSettingStatus restaurantId={restaurantId} />
+                        </div>
+                    </div>
+                )}
+
+
                 {activeTab === 'profile' && (
                     <>
                         {restaurant ? (
-                            <div className="space-y-6">
-                                {/* Restaurant Profile */}
-                                <div className="max-w-7xl mx-auto px-4 py-2">
+                            <div className="min-h-screen bg-gray-50">
+                                <div className="max-w-7xl mx-auto px-4 py-6">
                                     {/* Image Gallery */}
                                     <div className="relative h-96 rounded-2xl overflow-hidden mb-6">
                                         <img
-                                            src={restaurant.photos && restaurant.photos[currentImageIndex]?.photoUrl}
+                                            src={
+                                                restaurant.photos && restaurant.photos.length > 0
+                                                    ? restaurant.photos[currentImageIndex]?.photoUrl ||
+                                                    restaurant.photos[currentImageIndex]?.url
+                                                    : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'
+                                            }
                                             alt={restaurant.restaurantName}
                                             className="w-full h-full object-cover"
                                         />
                                         {/* Navigation Arrows */}
-                                        <button
-                                            onClick={prevImage}
-                                            className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70"
-                                        >
-                                            <ChevronLeft className="w-5 h-5" />
-                                        </button>
-                                        <button
-                                            onClick={nextImage}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70"
-                                        >
-                                            <ChevronRight className="w-5 h-5" />
-                                        </button>
-                                        {/* Image Indicators */}
-                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
-                                            {restaurant.photos && restaurant.photos.map((_, index) => (
+                                        {restaurant.photos && restaurant.photos.length > 1 && (
+                                            <>
                                                 <button
-                                                    key={index}
-                                                    onClick={() => setCurrentImageIndex(index)}
-                                                    className={`w-3 h-3 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'
-                                                        }`}
-                                                />
-                                            ))}
-                                        </div>
+                                                    onClick={prevImage}
+                                                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70"
+                                                >
+                                                    <ChevronLeft className="w-5 h-5" />
+                                                </button>
+                                                <button
+                                                    onClick={nextImage}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70"
+                                                >
+                                                    <ChevronRight className="w-5 h-5" />
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
+
                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                         {/* Main Content */}
                                         <div className="lg:col-span-2">
@@ -629,17 +736,27 @@ export default function RestaurantDashboard() {
                                                         <h1 className="text-3xl font-bold text-gray-900 mb-2">
                                                             {restaurant.restaurantName}
                                                         </h1>
-                                                        <p className="text-lg text-gray-600 mb-3">{restaurant.foodType}</p>
+                                                        <p className="text-lg text-gray-600 mb-3">
+                                                            {restaurant.foodType}
+                                                        </p>
                                                         <div className="flex items-center space-x-4">
                                                             <div className="flex items-center space-x-1">
                                                                 {renderStars(restaurant.rating)}
                                                                 <span className="font-medium">{restaurant.rating}</span>
-                                                                <span className="text-gray-500">({restaurant.reviewCount} รีวิว)</span>
+                                                                <span className="text-gray-500">
+                                                                    ({restaurant.reviewCount} รีวิว)
+                                                                </span>
                                                             </div>
-                                                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${restaurant.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                                                }`}>
+                                                            <span
+                                                                className={`px-3 py-1 rounded-full text-sm font-medium ${restaurant.isOpen
+                                                                    ? 'bg-green-100 text-green-800'
+                                                                    : 'bg-red-100 text-red-800'
+                                                                    }`}
+                                                            >
                                                                 <Clock className="w-4 h-4 inline mr-1" />
-                                                                {restaurant.isOpen ? `เปิดอยู่ • ปิด ${restaurant.closeTime} น.` : 'ปิดแล้ว'}
+                                                                {restaurant.isOpen
+                                                                    ? `เปิดอยู่ • ปิด ${restaurant.closeTime} น.`
+                                                                    : 'ปิดแล้ว'}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -649,21 +766,34 @@ export default function RestaurantDashboard() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                {/* Special Tags */}
+
+                                                {/* Tags */}
                                                 <div className="flex flex-wrap gap-2 mb-4">
-                                                    {restaurant.lifestyles && restaurant.lifestyles.map((lifestyle, index) => (
-                                                        <span key={index} className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium">
-                                                            Halal
-                                                        </span>
-                                                    ))}
-                                                    {restaurant.locationStyles && restaurant.locationStyles.map((location, index) => (
-                                                        <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium">
-                                                            วิวทะเล
-                                                        </span>
-                                                    ))}
+                                                    {restaurant.lifestyles &&
+                                                        restaurant.lifestyles.map((lifestyle, idx) => (
+                                                            <span
+                                                                key={idx}
+                                                                className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium"
+                                                            >
+                                                                Halal
+                                                            </span>
+                                                        ))}
+                                                    {restaurant.locationStyles &&
+                                                        restaurant.locationStyles.map((loc, index) => (
+                                                            <span
+                                                                key={index}
+                                                                className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium"
+                                                            >
+                                                                วิวทะเล
+                                                            </span>
+                                                        ))}
                                                 </div>
-                                                <p className="text-gray-700 leading-relaxed">{restaurant.description}</p>
+
+                                                <p className="text-gray-700 leading-relaxed">
+                                                    {restaurant.description}
+                                                </p>
                                             </div>
+
                                             {/* Tabs */}
                                             <div className="bg-white rounded-xl shadow-sm mb-6">
                                                 <div className="border-b">
@@ -671,12 +801,11 @@ export default function RestaurantDashboard() {
                                                         {[
                                                             { id: 'overview', label: 'ภาพรวม' },
                                                             { id: 'menu', label: 'เมนูแนะนำ' },
-                                                            { id: 'reviews', label: 'รีวิว' }
                                                         ].map((tab) => (
                                                             <button
                                                                 key={tab.id}
-                                                                onClick={() => setActiveTab(tab.id)}
-                                                                className={`py-4 font-medium border-b-2 ${activeTab === tab.id
+                                                                onClick={() => setActiveTab2(tab.id)}
+                                                                className={`py-4 font-medium border-b-2 ${activeTab2 === tab.id
                                                                     ? 'border-orange-500 text-orange-600'
                                                                     : 'border-transparent text-gray-500 hover:text-gray-700'
                                                                     }`}
@@ -686,6 +815,7 @@ export default function RestaurantDashboard() {
                                                         ))}
                                                     </nav>
                                                 </div>
+
                                                 <div className="p-6">
                                                     {activeTab2 === 'overview' && (
                                                         <div>
@@ -695,85 +825,95 @@ export default function RestaurantDashboard() {
                                                                     <MapPin className="w-5 h-5 text-gray-400" />
                                                                     <div>
                                                                         <p className="font-medium">ที่อยู่</p>
-                                                                        <p className="text-gray-600 text-sm">{restaurant.address}</p>
+                                                                        <p className="text-gray-600 text-sm">
+                                                                            {restaurant.address}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex items-center space-x-3">
                                                                     <Phone className="w-5 h-5 text-gray-400" />
                                                                     <div>
                                                                         <p className="font-medium">โทรศัพท์</p>
-                                                                        <p className="text-gray-600 text-sm">{restaurant.phone}</p>
+                                                                        <p className="text-gray-600 text-sm">
+                                                                            {restaurant.phone}
+                                                                        </p>
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex items-center space-x-3">
                                                                     <Clock className="w-5 h-5 text-gray-400" />
                                                                     <div>
                                                                         <p className="font-medium">เวลาเปิด-ปิด</p>
-                                                                        <p className="text-gray-600 text-sm">{restaurant.openTime} - {restaurant.closeTime} น.</p>
+                                                                        <p className="text-gray-600 text-sm">
+                                                                            {restaurant.openTime} - {restaurant.closeTime} น.
+                                                                        </p>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     )}
+
                                                     {activeTab2 === 'menu' && (
                                                         <div>
                                                             <h3 className="text-lg font-semibold mb-4">เมนูแนะนำ</h3>
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                {restaurant.menuHighlights && restaurant.menuHighlights.map((menu, index) => (
-                                                                    <div key={index} className="flex items-center space-x-4 p-3 border rounded-lg">
-                                                                        <img
-                                                                            src={menu.image}
-                                                                            alt={menu.name}
-                                                                            className="w-16 h-16 rounded-lg object-cover"
-                                                                        />
-                                                                        <div className="flex-1">
-                                                                            <h4 className="font-medium">{menu.name}</h4>
-                                                                            <p className="text-orange-600 font-semibold">฿{menu.price}</p>
-                                                                        </div>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {activeTab2 === 'reviews' && (
-                                                        <div>
-                                                            <h3 className="text-lg font-semibold mb-4">รีวิวจากลูกค้า</h3>
-                                                            <div className="space-y-4">
-                                                                {restaurant.reviews && restaurant.reviews.map((review) => (
-                                                                    <div key={review.id} className="border-b pb-4">
-                                                                        <div className="flex items-start space-x-3">
+                                                                {restaurant.menuHighlights &&
+                                                                    restaurant.menuHighlights.map((menu, i) => (
+                                                                        <div
+                                                                            key={i}
+                                                                            className="flex items-center space-x-4 p-3 border rounded-lg"
+                                                                        >
                                                                             <img
-                                                                                src={review.avatar}
-                                                                                alt={review.userName}
-                                                                                className="w-10 h-10 rounded-full"
+                                                                                src={menu.image}
+                                                                                alt={menu.name}
+                                                                                className="w-16 h-16 rounded-lg object-cover"
                                                                             />
                                                                             <div className="flex-1">
-                                                                                <div className="flex items-center space-x-2 mb-1">
-                                                                                    <h4 className="font-medium">{review.userName}</h4>
-                                                                                    <div className="flex">{renderStars(review.rating)}</div>
-                                                                                    <span className="text-gray-500 text-sm">{review.date}</span>
-                                                                                </div>
-                                                                                <p className="text-gray-700">{review.comment}</p>
+                                                                                <h4 className="font-medium">{menu.name}</h4>
+                                                                                <p className="text-orange-600 font-semibold">
+                                                                                    ฿{menu.price}
+                                                                                </p>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-                                                                ))}
+                                                                    ))}
                                                             </div>
                                                         </div>
                                                     )}
                                                 </div>
                                             </div>
+
+                                            {/* แผนที่ร้านอาหาร */}
+                                            {restaurant.latitude && restaurant.longitude && (
+                                                <div className="my-6">
+                                                    <RestaurantMap
+                                                        latitude={Number(restaurant.latitude)}
+                                                        longitude={Number(restaurant.longitude)}
+                                                        name={restaurant.restaurantName}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
+
                                         {/* Sidebar */}
                                         <div className="space-y-6">
-                                            {/* Services */}
                                             <div className="bg-white rounded-xl shadow-sm p-6">
                                                 <h3 className="text-lg font-semibold mb-4">สิ่งอำนวยความสะดวก</h3>
                                                 <div className="space-y-3">
-                                                    {restaurant.facilities && restaurant.facilities.map((facility, index) => (
+                                                    {restaurant.facilitiesLabel && restaurant.facilitiesLabel.map && restaurant.facilitiesLabel.map((facility, index) => (
                                                         <div key={index} className="flex items-center space-x-3">
                                                             {getFacilityIcon(facility)}
-                                                            <span className="text-gray-700">{getFacilityLabel(facility)}</span>
+                                                            <span className="text-gray-700">{facility}</span>
+                                                        </div>
+                                                    ))}
+                                                    {restaurant.paymentOptionsLabel && restaurant.paymentOptionsLabel.map && restaurant.paymentOptionsLabel.map((option, index) => (
+                                                        <div key={index} className="flex items-center space-x-3">
+                                                            {getPaymentIcon(option)}
+                                                            <span className="text-gray-700">{option}</span>
+                                                        </div>
+                                                    ))}
+                                                    {restaurant.serviceOptionsLabel && restaurant.serviceOptionsLabel.map && restaurant.serviceOptionsLabel.map((service, index) => (
+                                                        <div key={index} className="flex items-center space-x-3">
+                                                            {getServiceOptionIcon(service)}
+                                                            <span className="text-gray-700">{service}</span>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -783,11 +923,63 @@ export default function RestaurantDashboard() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="text-center py-10 text-gray-400">กำลังโหลดข้อมูลร้านอาหาร...</div>
+                            <div className="text-center py-10 text-gray-400">
+                                กำลังโหลดข้อมูลร้านอาหาร...
+                            </div>
                         )}
                     </>
                 )}
             </main>
         </div >
+
     );
+    function BookingSettingStatus({ restaurantId }) {
+        const [hasSetting, setHasSetting] = React.useState(null);
+        const [loading, setLoading] = React.useState(true);
+
+        React.useEffect(() => {
+            if (!restaurantId) return;
+            axios
+                .get(`http://localhost:3001/api/booking-settings/${restaurantId}`)
+                .then((res) => {
+                    setHasSetting(!!res.data);
+                })
+                .catch(() => setHasSetting(false))
+                .finally(() => setLoading(false));
+        }, [restaurantId]);
+
+        if (loading)
+            return <p className="text-gray-500">กำลังตรวจสอบข้อมูลการตั้งค่าการจอง...</p>;
+
+        if (!hasSetting) {
+            return (
+                <div>
+                    <p className="text-gray-600 mb-4">ยังไม่มีการตั้งค่าการจองสำหรับร้านนี้</p>
+                    <Link
+                        to={`/RestaurantForBookingSettings/${restaurantId}`}
+                        className="inline-flex items-center px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                    >
+                        <Settings className="w-4 h-4 mr-2" />
+                        ตั้งค่าการจอง
+                    </Link>
+                </div>
+            );
+        }
+
+        return (
+            <div>
+                <p className="text-green-600 mb-4 font-medium">
+                    ✅ ร้านนี้ได้ตั้งค่าการจองเรียบร้อยแล้ว
+                </p>
+                <Link
+                    to={`/RestaurantForBookingSettings/${restaurantId}`}
+                    className="inline-flex items-center px-4 py-2 border border-orange-500 text-orange-600 rounded-lg hover:bg-orange-50 transition-colors"
+                >
+                    <Settings className="w-4 h-4 mr-2" />
+                    แก้ไขการตั้งค่าการจอง
+                </Link>
+            </div>
+        );
+    }
+
 }
