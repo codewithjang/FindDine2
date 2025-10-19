@@ -19,8 +19,9 @@ function RestaurantNavbar() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('restaurant');
-    window.location.href = '/RestaurantLogin';
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/';
   };
 
   return (
