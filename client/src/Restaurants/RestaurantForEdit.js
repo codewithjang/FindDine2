@@ -174,7 +174,7 @@ export default function RestaurantForEdit() {
                             <p className="text-sm text-gray-500">{formData.restaurantName || 'โปรไฟล์ร้าน'}</p>
                         </div>
                     </div>
-                    <Link to="/main_page" className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</Link>
+                    <Link to={`/RestaurantForMainPage/${restaurantId}`} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</Link>
                 </div>
 
                 {/* two-column layout */}
