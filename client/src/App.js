@@ -23,6 +23,7 @@ import EditProfile from './User/EditProfile'
 import RestaurantMap from './component/RestaurantMap';
 import UserProfile from './User/UserProfile';
 import AllRestaurantsMap from './component/AllRestaurantsMap';
+import BookingSettings from './Restaurants/BookingSettings';
 
 function Layout() {
   const location = useLocation();
@@ -58,13 +59,9 @@ function Layout() {
                   <FaHome />
                   <span>หน้าหลัก</span>
                 </Link>
-                <Link to="/map" className="flex items-center space-x-1 hover:text-white transition">
+                <Link to="/AllRestaurantsMap" className="flex items-center space-x-1 hover:text-white transition">
                   <FaMapMarkedAlt />
                   <span>แผนที่</span>
-                </Link>
-                <Link to="/login" className="flex items-center space-x-1 hover:text-white transition">
-                  <FaSignInAlt />
-                  <span>เข้าสู่ระบบ</span>
                 </Link>
               </div>
             </nav>
@@ -120,13 +117,14 @@ function Layout() {
         <Route path="/UserLogin" element={<UserLogin />} />
         <Route path="/RestaurantDetail/:id" element={<RestaurantDetail />} />
         <Route path="/CompareRestaurant" element={<CompareRestaurant />} />
-        <Route path="/ResBooking" element={<ResBooking />} />
+        <Route path="/ResBooking/:id" element={<ResBooking />} />
         <Route path="/RestaurantForMainPage/:id" element={<RestaurantMainPage />} />
         <Route path="/EditProfile" element={<EditProfile />} />
         <Route path="/UserProfile" element={<UserProfile />} />
         <Route path="/RestaurantMap" element={<RestaurantMap />} />
         <Route path="/AllRestaurantsMap" element={<AllRestaurantsMap />} />
         <Route path="/RestaurantForEdit/:id" element={<RestaurantForEdit />} />
+        <Route path="/RestaurantForBookingSettings/:id" element={<BookingSettings />} /> 
       </Routes>
     </>
   );
