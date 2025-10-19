@@ -476,8 +476,19 @@ export default function MainPage() {
               {/* Restaurant Image */}
               <div className="relative h-48 overflow-hidden">
                 <img
-                  src={restaurant.photos[0]?.url || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'}
-                  alt={restaurant.name}
+                  src={
+                    Array.isArray(restaurant.photos)
+                      ? restaurant.photos[0]?.url
+                      : (() => {
+                        try {
+                          const parsed = JSON.parse(restaurant.photos);
+                          return parsed[0]?.url;
+                        } catch {
+                          return 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400';
+                        }
+                      })()
+                  }
+                  alt={restaurant.restaurantName}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
                 {/* Status Badge */}
@@ -530,11 +541,16 @@ export default function MainPage() {
 
                 {/* Location Tags */}
                 <div className="flex flex-wrap gap-1 mb-4">
-                  {restaurant.locationStyles.map((location, index) => (
+                  {(Array.isArray(restaurant.locationStyles)
+                    ? restaurant.locationStyles
+                    : typeof restaurant.locationStyles === "string"
+                      ? [restaurant.locationStyles]
+                      : []
+                  ).map((location, index) => (
                     <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                      {location === 'in_city' && 'ในเมือง'}
-                      {location === 'sea_view' && 'วิวทะเล'}
-                      {location === 'natural_style' && 'ธรรมชาติ'}
+                      {location === "in_city" && "ในเมือง"}
+                      {location === "sea_view" && "วิวทะเล"}
+                      {location === "natural_style" && "ธรรมชาติ"}
                     </span>
                   ))}
                 </div>
