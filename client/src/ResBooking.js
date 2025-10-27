@@ -171,8 +171,8 @@ const RestaurantBooking = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <div className="sticky top-0 z-10 bg-white shadow-sm">
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="sticky top-0 z-10">
+                <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between">
                     <button onClick={handleBack} className="flex items-center text-gray-600 hover:text-gray-800">
                         <ArrowLeft className="w-5 h-5 mr-2" />
                         กลับ
@@ -181,7 +181,7 @@ const RestaurantBooking = () => {
             </div>
 
             {/* Main */}
-            <div className="max-w-4xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="max-w-4xl mx-auto px-4 py-2 grid grid-cols-1 lg:grid-cols-3 gap-2">
                 {/* Sidebar */}
                 <div className="bg-white rounded-xl shadow-sm p-6">
                     <img

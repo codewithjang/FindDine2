@@ -20,6 +20,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
 import RestaurantMap from './component/RestaurantMap';
+import bannerBg from './assets/bg/Banner.png';
 
 // Map payment option label or id to icon component
 const getPaymentIcon = (labelOrId) => {
@@ -81,25 +82,52 @@ const getLifestyleIcon = (labelOrId) => {
 // Map facility label or id to icon component
 const getFacilityIcon = (labelOrId) => {
   switch (labelOrId) {
-    case 'ที่จอดรถ':
     case 'parking_space':
+    case 'ที่จอดรถ':
       return <Car className="w-4 h-4" />;
-    case 'มี Wi-Fi':
     case 'wifi_available':
+    case 'มี Wi-Fi':
       return <Wifi className="w-4 h-4" />;
-    case 'พื้นที่ทำงาน':
     case 'work_space_available':
+    case 'พื้นที่ทำงาน':
       return <Users className="w-4 h-4" />;
-    case 'เป็นมิตรกับสัตว์เลี้ยง':
     case 'pet_friendly':
+    case 'เป็นมิตรกับสัตว์เลี้ยง':
       return <Heart className="w-4 h-4" />;
-    case 'โซนสำหรับเด็ก':
     case 'kids_area':
+    case 'โซนสำหรับเด็ก':
       return <Users className="w-4 h-4" />;
     default:
       return <Users className="w-4 h-4" />;
   }
 };
+const facilityLabelTH = (id) => ({
+  parking_space: 'ที่จอดรถ',
+  wifi_available: 'มี Wi-Fi',
+  work_space_available: 'พื้นที่ทำงาน',
+  pet_friendly: 'เป็นมิตรกับสัตว์เลี้ยง',
+  kids_area: 'โซนสำหรับเด็ก',
+}[id] || id);
+
+const paymentLabelTH = (id) => ({
+  accepts_bank_payment: 'รับชำระผ่านธนาคาร',
+  accepts_credit_card: 'รับบัตรเครดิต',
+}[id] || id);
+
+const serviceLabelTH = (id) => ({
+  accepts_reservation: 'รับการจอง',
+}[id] || id);
+
+const locationStyleLabelTH = (id) => ({
+  in_city: 'ในเมือง',
+  sea_view: 'วิวทะเล',
+  natural_style: 'สไตล์ธรรมชาติ',
+}[id] || id);
+
+const lifestyleLabelTH = (id) => ({
+  halal: 'ฮาลาล',
+  vegan_option: 'มังสวิรัติ/วีแกน',
+}[id] || id);
 
 const RestaurantDetail = (props) => {
   const { id } = useParams();
@@ -116,29 +144,109 @@ const RestaurantDetail = (props) => {
     if (!restaurantId) return;
     setLoading(true);
     setError(null);
-    axios.get(`http://localhost:3001/api/restaurants/${restaurantId}`)
-      .then(res => {
-        const r = res.data;
-        setRestaurant({
-          ...r,
-          photos: Array.isArray(r.photos) ? r.photos : (r.photos ? JSON.parse(r.photos) : []),
-          lifestyles: Array.isArray(r.lifestyles) ? r.lifestyles : (r.lifestyles ? JSON.parse(r.lifestyles) : []),
-          locationStyles: Array.isArray(r.locationStyles) ? r.locationStyles : (r.locationStyles ? JSON.parse(r.locationStyles) : []),
-          serviceOptions: Array.isArray(r.serviceOptions) ? r.serviceOptions : (r.serviceOptions ? JSON.parse(r.serviceOptions) : []),
-          facilities: Array.isArray(r.facilities) ? r.facilities : (r.facilities ? JSON.parse(r.facilities) : []),
-          paymentOptions: Array.isArray(r.paymentOptions) ? r.paymentOptions : (r.paymentOptions ? JSON.parse(r.paymentOptions) : []),
-          menuHighlights: Array.isArray(r.menuHighlights) ? r.menuHighlights : (r.menuHighlights ? JSON.parse(r.menuHighlights) : []),
-          reviews: Array.isArray(r.reviews) ? r.reviews : (r.reviews ? JSON.parse(r.reviews) : []),
-          facilitiesLabel: r.facilitiesLabel,
-        });
-        console.log('restaurant from backend:', r);
+    const token = localStorage.getItem('token');
+    axios
+      .get(
+        `http://localhost:3001/api/restaurants/${restaurantId}`,
+        token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+      )
+      .then((res) => {
+        const data = Array.isArray(res.data) ? res.data[0] : res.data;
+
+        // 🧩 ฟังก์ชันปลด JSON ซ้อน (parse สูงสุด 2 รอบ)
+        const toArray = (val) => {
+          if (val == null) return [];
+          let cur = val;
+
+          if (Array.isArray(cur)) return cur;
+
+          for (let i = 0; i < 2; i++) {
+            if (Array.isArray(cur)) return cur;
+            if (typeof cur === "string") {
+              try {
+                const parsed = JSON.parse(cur);
+                cur = parsed;
+                continue;
+              } catch {
+                break;
+              }
+            } else {
+              break;
+            }
+          }
+
+          if (typeof cur === "string") {
+            const trimmed = cur.trim();
+            const stripped = trimmed.replace(/^\[|\]$/g, "").replace(/"/g, "");
+            if (stripped.includes(",")) {
+              return stripped.split(",").map((s) => s.trim()).filter(Boolean);
+            }
+            return trimmed ? [trimmed] : [];
+          }
+
+          return Array.isArray(cur) ? cur : cur ? [cur] : [];
+        };
+
+        // 🧩 normalize รูปภาพ
+        const normalizePhotos = (val) => {
+          const arr = toArray(val);
+          return arr
+            .map((item) => {
+              if (typeof item === "string") {
+                return { url: item, isPrimary: false };
+              }
+              if (item && typeof item === "object") {
+                return {
+                  url: item.url || item.photoUrl || "",
+                  isPrimary: !!item.isPrimary,
+                };
+              }
+              return null;
+            })
+            .filter((p) => p && p.url);
+        };
+
+        // 🧩 normalize array id ทั่วไป
+        const normalizeArray = (val) => {
+          return toArray(val)
+            .map((x) => {
+              if (typeof x === "string") return x;
+              if (x && typeof x === "object") {
+                return (
+                  x.facilityType ||
+                  x.paymentType ||
+                  x.serviceType ||
+                  x.locationType ||
+                  x.lifestyleType ||
+                  x.id ||
+                  x.value ||
+                  ""
+                );
+              }
+              return "";
+            })
+            .filter(Boolean);
+        };
+
+        const restaurantObj = {
+          ...data,
+          photos: normalizePhotos(data.photos),
+          facilities: normalizeArray(data.facilities),
+          paymentOptions: normalizeArray(data.paymentOptions),
+          serviceOptions: normalizeArray(data.serviceOptions),
+          locationStyles: normalizeArray(data.locationStyles),
+          lifestyles: normalizeArray(data.lifestyles),
+          menuHighlights: normalizeArray(data.menuHighlights),
+          reviews: normalizeArray(data.reviews),
+        };
+
+        setRestaurant(restaurantObj);
         setLoading(false);
       })
       .catch((err) => {
-        setRestaurant(null);
+        console.error("Error fetching restaurant:", err);
+        setError("ไม่พบข้อมูลร้านอาหาร");
         setLoading(false);
-        setError('ไม่พบข้อมูลร้านอาหาร');
-        console.error('RestaurantDetail: API error', err);
       });
   }, [restaurantId]);
 
@@ -164,14 +272,12 @@ const RestaurantDetail = (props) => {
   };
 
   const nextImage = () => {
-    if (!restaurant || !restaurant.photos || restaurant.photos.length === 0) return;
     setCurrentImageIndex((prev) =>
       prev === restaurant.photos.length - 1 ? 0 : prev + 1
     );
   };
 
   const prevImage = () => {
-    if (!restaurant || !restaurant.photos || restaurant.photos.length === 0) return;
     setCurrentImageIndex((prev) =>
       prev === 0 ? restaurant.photos.length - 1 : prev - 1
     );
@@ -230,17 +336,19 @@ const RestaurantDetail = (props) => {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Image Gallery */}
-        <div className="relative h-96 rounded-2xl overflow-hidden mb-6">
+        <div
+          className="relative h-96 rounded-2xl overflow-hidden mb-6 shadow-lg flex items-center justify-center bg-cover bg-center"
+          style={{ backgroundImage: `url(${bannerBg})` }}
+        >
           <img
             src={
-              restaurant.photos && restaurant.photos.length > 0
-                ? restaurant.photos[currentImageIndex]?.photoUrl ||
-                restaurant.photos[currentImageIndex]?.url
-                : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'
+              restaurant.photos?.[currentImageIndex]?.url ||
+              "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400"
             }
             alt={restaurant.restaurantName}
-            className="w-full h-full object-cover"
+            className="h-full max-w-full object-contain bg-black/5 transition-transform duration-500 ease-in-out shadow-md"
           />
+
           {/* Navigation Arrows */}
           {restaurant.photos && restaurant.photos.length > 1 && (
             <>
@@ -260,13 +368,16 @@ const RestaurantDetail = (props) => {
           )}
 
           {/* Image Indicators */}
-          {restaurant.photos && restaurant.photos.length > 1 && (
+          {Array.isArray(restaurant.photos) && restaurant.photos.length > 1 && (
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
               {restaurant.photos.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentImageIndex(index)}
-                  className={`w-3 h-3 rounded-full ${index === currentImageIndex ? 'bg-white' : 'bg-white bg-opacity-50'}`}
+                  className={`w-3 h-3 rounded-full ${index === currentImageIndex
+                      ? 'bg-white'
+                      : 'bg-white bg-opacity-50'
+                    }`}
                 />
               ))}
             </div>
@@ -305,16 +416,23 @@ const RestaurantDetail = (props) => {
 
               {/* Special Tags */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {restaurant.lifestylesLabel && restaurant.lifestylesLabel.map && restaurant.lifestylesLabel.map((lifestyle, idx) => (
-                  <span key={idx} className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium flex items-center gap-1">
-                    {getLifestyleIcon(lifestyle)}
-                    {lifestyle}
+                {(restaurant.lifestyles || []).map((l, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium flex items-center gap-1"
+                  >
+                    {getLifestyleIcon(l)}
+                    {lifestyleLabelTH(l)}
                   </span>
                 ))}
-                {restaurant.locationStylesLabel && restaurant.locationStylesLabel.map && restaurant.locationStylesLabel.map((location, index) => (
-                  <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium flex items-center gap-1">
-                    {getLocationStyleIcon(location)}
-                    {location}
+
+                {(restaurant.locationStyles || []).map((s, i) => (
+                  <span
+                    key={i}
+                    className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium flex items-center gap-1"
+                  >
+                    {getLocationStyleIcon(s)}
+                    {locationStyleLabelTH(s)}
                   </span>
                 ))}
               </div>
@@ -442,22 +560,22 @@ const RestaurantDetail = (props) => {
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="text-lg font-semibold mb-4">สิ่งอำนวยความสะดวก</h3>
               <div className="space-y-3">
-                {restaurant.facilitiesLabel && restaurant.facilitiesLabel.map && restaurant.facilitiesLabel.map((facility, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    {getFacilityIcon(facility)}
-                    <span className="text-gray-700">{facility}</span>
+                {(restaurant.facilities || []).map((f, i) => (
+                  <div key={i} className="flex items-center space-x-3">
+                    {getFacilityIcon(f)}
+                    <span className="text-gray-700">{facilityLabelTH(f)}</span>
                   </div>
                 ))}
-                {restaurant.paymentOptionsLabel && restaurant.paymentOptionsLabel.map && restaurant.paymentOptionsLabel.map((option, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    {getPaymentIcon(option)}
-                    <span className="text-gray-700">{option}</span>
+                {(restaurant.paymentOptions || []).map((p, i) => (
+                  <div key={i} className="flex items-center space-x-3">
+                    {getPaymentIcon(p)}
+                    <span className="text-gray-700">{paymentLabelTH(p)}</span>
                   </div>
                 ))}
-                {restaurant.serviceOptionsLabel && restaurant.serviceOptionsLabel.map && restaurant.serviceOptionsLabel.map((service, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    {getServiceOptionIcon(service)}
-                    <span className="text-gray-700">{service}</span>
+                {(restaurant.serviceOptions || []).map((s, i) => (
+                  <div key={i} className="flex items-center space-x-3">
+                    {getServiceOptionIcon(s)}
+                    <span className="text-gray-700">{serviceLabelTH(s)}</span>
                   </div>
                 ))}
               </div>

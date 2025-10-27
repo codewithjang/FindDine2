@@ -4,6 +4,7 @@ import axios from 'axios';
 import bg from '../assets/bg/bgMainRes.png';
 import RestaurantMap from '../component/RestaurantMap';
 import { Link, useParams } from 'react-router-dom';
+import bannerBg from '../assets/bg/Banner.png';
 import {
     Bell,
     Calendar,
@@ -99,25 +100,53 @@ const getLifestyleIcon = (labelOrId) => {
 // Map facility label or id to icon component
 const getFacilityIcon = (labelOrId) => {
     switch (labelOrId) {
-        case 'ที่จอดรถ':
         case 'parking_space':
+        case 'ที่จอดรถ':
             return <Car className="w-4 h-4" />;
-        case 'มี Wi-Fi':
         case 'wifi_available':
+        case 'มี Wi-Fi':
             return <Wifi className="w-4 h-4" />;
-        case 'พื้นที่ทำงาน':
         case 'work_space_available':
+        case 'พื้นที่ทำงาน':
             return <Users className="w-4 h-4" />;
-        case 'เป็นมิตรกับสัตว์เลี้ยง':
         case 'pet_friendly':
+        case 'เป็นมิตรกับสัตว์เลี้ยง':
             return <Heart className="w-4 h-4" />;
-        case 'โซนสำหรับเด็ก':
         case 'kids_area':
+        case 'โซนสำหรับเด็ก':
             return <Users className="w-4 h-4" />;
         default:
             return <Users className="w-4 h-4" />;
     }
 };
+const facilityLabelTH = (id) => ({
+    parking_space: 'ที่จอดรถ',
+    wifi_available: 'มี Wi-Fi',
+    work_space_available: 'พื้นที่ทำงาน',
+    pet_friendly: 'เป็นมิตรกับสัตว์เลี้ยง',
+    kids_area: 'โซนสำหรับเด็ก',
+}[id] || id);
+
+const paymentLabelTH = (id) => ({
+    accepts_bank_payment: 'รับชำระผ่านธนาคาร',
+    accepts_credit_card: 'รับบัตรเครดิต',
+}[id] || id);
+
+const serviceLabelTH = (id) => ({
+    accepts_reservation: 'รับการจอง',
+}[id] || id);
+
+const locationStyleLabelTH = (id) => ({
+    in_city: 'ในเมือง',
+    sea_view: 'วิวทะเล',
+    natural_style: 'สไตล์ธรรมชาติ',
+}[id] || id);
+
+const lifestyleLabelTH = (id) => ({
+    halal: 'ฮาลาล',
+    vegan_option: 'มังสวิรัติ/วีแกน',
+}[id] || id);
+
 export default function RestaurantDashboard() {
     const { id } = useParams();
     const restaurantId = id;
@@ -198,20 +227,86 @@ export default function RestaurantDashboard() {
         const token = localStorage.getItem('token');
         axios.get(`http://localhost:3001/api/restaurants/${restaurantId}`, token ? { headers: { Authorization: `Bearer ${token}` } } : {})
             .then(res => {
-                // Handle both array/object response
                 const data = Array.isArray(res.data) ? res.data[0] : res.data;
+
+                // --- helpers: ปลด JSON ซ้อนจนเป็น array จริง (ลอง parse สูงสุด 2 ครั้ง) ---
+                const toArray = (val) => {
+                    if (val == null) return [];
+                    let cur = val;
+
+                    // ถ้า backend ส่งมาแบบ array อยู่แล้ว
+                    if (Array.isArray(cur)) return cur;
+
+                    // ลอง parse สูงสุด 2 รอบ สำหรับเคสที่ถูกเข้ารหัสซ้อน
+                    for (let i = 0; i < 2; i++) {
+                        if (Array.isArray(cur)) return cur;
+                        if (typeof cur === 'string') {
+                            try {
+                                const parsed = JSON.parse(cur);
+                                cur = parsed;
+                                continue;            // ยังไม่ใช่ array? วนต่อไปอีกครั้ง
+                            } catch {
+                                break;               // parse ไม่ได้แล้ว
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+
+                    // เผื่อเป็น string คั่นด้วย comma (กรณีหลุดมาแบบ "a,b")
+                    if (typeof cur === 'string') {
+                        const trimmed = cur.trim();
+                        // ลอก [] และ " ออก แล้ว split
+                        const stripped = trimmed.replace(/^\[|\]$/g, '').replace(/"/g, '');
+                        if (stripped.includes(',')) {
+                            return stripped.split(',').map(s => s.trim()).filter(Boolean);
+                        }
+                        return trimmed ? [trimmed] : [];
+                    }
+
+                    // อย่างน้อยให้เป็น array ที่ iterate ได้
+                    return Array.isArray(cur) ? cur : (cur ? [cur] : []);
+                };
+
+                // โครงสร้างรูปให้เป็น [{url,isPrimary}] เสมอ (รองรับ url เป็น string หรือ {url}/{photoUrl})
+                const normalizePhotos = (val) => {
+                    const arr = toArray(val);
+                    return arr
+                        .map(item => {
+                            if (typeof item === 'string') {
+                                return { url: item, isPrimary: false };
+                            }
+                            if (item && typeof item === 'object') {
+                                return { url: item.url || item.photoUrl || '', isPrimary: !!item.isPrimary };
+                            }
+                            return null;
+                        })
+                        .filter(p => p && p.url);
+                };
+
+                // ใช้กับ fields อื่น ๆ ที่เป็นรายการ id
+                const normalizeArray = (val) => {
+                    return toArray(val).map(x => {
+                        if (typeof x === 'string') return x;
+                        if (x && typeof x === 'object') {
+                            // เผื่อเป็น legacy object { facilityType: "..."} ฯลฯ
+                            return x.facilityType || x.paymentType || x.serviceType || x.locationType || x.lifestyleType || x.id || x.value || '';
+                        }
+                        return '';
+                    }).filter(Boolean);
+                };
+
                 const restaurantObj = {
                     ...data,
-                    photos: Array.isArray(data.photos) ? data.photos : (data.photos ? JSON.parse(data.photos) : []),
-                    lifestyles: Array.isArray(data.lifestyles) ? data.lifestyles : (data.lifestyles ? JSON.parse(data.lifestyles) : []),
-                    locationStyles: Array.isArray(data.locationStyles) ? data.locationStyles : (data.locationStyles ? JSON.parse(data.locationStyles) : []),
-                    serviceOptions: Array.isArray(data.serviceOptions) ? data.serviceOptions : (data.serviceOptions ? JSON.parse(data.serviceOptions) : []),
-                    menuHighlights: Array.isArray(data.menuHighlights) ? data.menuHighlights : (data.menuHighlights ? JSON.parse(data.menuHighlights) : []),
-                    reviews: Array.isArray(data.reviews) ? data.reviews : (data.reviews ? JSON.parse(data.reviews) : []),
-                    facilities: Array.isArray(data.facilities) ? data.facilities : (data.facilities ? JSON.parse(data.facilities) : []),
+                    photos: normalizePhotos(data.photos),
+                    facilities: normalizeArray(data.facilities),
+                    paymentOptions: normalizeArray(data.paymentOptions),
+                    serviceOptions: normalizeArray(data.serviceOptions),
+                    locationStyles: normalizeArray(data.locationStyles),
+                    lifestyles: normalizeArray(data.lifestyles),
                 };
                 setRestaurant(restaurantObj);
-                console.log('Restaurant data from backend:', restaurantObj);
+
             })
             .catch((err) => {
                 console.error('Error fetching restaurant:', err);
@@ -266,17 +361,6 @@ export default function RestaurantDashboard() {
         switch (serviceType) {
             case 'accept_reservation': return <Calendar className="w-4 h-4" />;
             case 'wifi': return <Wifi className="w-4 h-4" />;
-            case 'parking': return <Car className="w-4 h-4" />;
-            case 'credit_card': return <CreditCard className="w-4 h-4" />;
-            default: return <Users className="w-4 h-4" />;
-        }
-    };
-
-    // Facility icon and label mapping
-    const getFacilityIcon = (facilityType) => {
-        switch (facilityType) {
-            case 'wifi_available': return <Wifi className="w-4 h-4" />;
-            case 'pet_friendly': return <Heart className="w-4 h-4" />;
             case 'parking': return <Car className="w-4 h-4" />;
             case 'credit_card': return <CreditCard className="w-4 h-4" />;
             default: return <Users className="w-4 h-4" />;
@@ -693,20 +777,22 @@ export default function RestaurantDashboard() {
                 {activeTab === 'profile' && (
                     <>
                         {restaurant ? (
-                            <div className="min-h-screen bg-gray-50">
+                            <div className="min-h-screen">
                                 <div className="max-w-7xl mx-auto px-4 py-6">
                                     {/* Image Gallery */}
-                                    <div className="relative h-96 rounded-2xl overflow-hidden mb-6">
+                                    <div
+                                        className="relative h-96 rounded-2xl overflow-hidden mb-6 shadow-lg flex items-center justify-center bg-cover bg-center"
+                                        style={{ backgroundImage: `url(${bannerBg})` }}
+                                    >
                                         <img
                                             src={
-                                                restaurant.photos && restaurant.photos.length > 0
-                                                    ? restaurant.photos[currentImageIndex]?.photoUrl ||
-                                                    restaurant.photos[currentImageIndex]?.url
-                                                    : 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400'
+                                                restaurant.photos?.[currentImageIndex]?.url ||
+                                                "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400"
                                             }
                                             alt={restaurant.restaurantName}
-                                            className="w-full h-full object-cover"
+                                            className="h-full max-w-full object-contain bg-black/5 transition-transform duration-500 ease-in-out shadow-md"
                                         />
+
                                         {/* Navigation Arrows */}
                                         {restaurant.photos && restaurant.photos.length > 1 && (
                                             <>
@@ -723,6 +809,22 @@ export default function RestaurantDashboard() {
                                                     <ChevronRight className="w-5 h-5" />
                                                 </button>
                                             </>
+                                        )}
+
+                                        {/* Image Indicators */}
+                                        {Array.isArray(restaurant.photos) && restaurant.photos.length > 1 && (
+                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+                                                {restaurant.photos.map((_, index) => (
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => setCurrentImageIndex(index)}
+                                                        className={`w-3 h-3 rounded-full ${index === currentImageIndex
+                                                            ? 'bg-white'
+                                                            : 'bg-white bg-opacity-50'
+                                                            }`}
+                                                    />
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
 
@@ -769,24 +871,18 @@ export default function RestaurantDashboard() {
 
                                                 {/* Tags */}
                                                 <div className="flex flex-wrap gap-2 mb-4">
-                                                    {restaurant.lifestyles &&
-                                                        restaurant.lifestyles.map((lifestyle, idx) => (
-                                                            <span
-                                                                key={idx}
-                                                                className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium"
-                                                            >
-                                                                Halal
-                                                            </span>
-                                                        ))}
-                                                    {restaurant.locationStyles &&
-                                                        restaurant.locationStyles.map((loc, index) => (
-                                                            <span
-                                                                key={index}
-                                                                className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium"
-                                                            >
-                                                                วิวทะเล
-                                                            </span>
-                                                        ))}
+                                                    {(restaurant.lifestyles || []).map((l, i) => (
+                                                        <span key={i} className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full font-medium flex items-center gap-1">
+                                                            {getLifestyleIcon(l)}
+                                                            {lifestyleLabelTH(l)}
+                                                        </span>
+                                                    ))}
+                                                    {(restaurant.locationStyles || []).map((s, i) => (
+                                                        <span key={i} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full font-medium flex items-center gap-1">
+                                                            {getLocationStyleIcon(s)}
+                                                            {locationStyleLabelTH(s)}
+                                                        </span>
+                                                    ))}
                                                 </div>
 
                                                 <p className="text-gray-700 leading-relaxed">
@@ -898,22 +994,24 @@ export default function RestaurantDashboard() {
                                             <div className="bg-white rounded-xl shadow-sm p-6">
                                                 <h3 className="text-lg font-semibold mb-4">สิ่งอำนวยความสะดวก</h3>
                                                 <div className="space-y-3">
-                                                    {restaurant.facilitiesLabel && restaurant.facilitiesLabel.map && restaurant.facilitiesLabel.map((facility, index) => (
-                                                        <div key={index} className="flex items-center space-x-3">
+                                                    {restaurant.facilities?.map((facility, index) => (
+                                                        <div key={index} className="flex items-center space-x-2">
                                                             {getFacilityIcon(facility)}
-                                                            <span className="text-gray-700">{facility}</span>
+                                                            <span>{facilityLabelTH(facility)}</span>
                                                         </div>
                                                     ))}
-                                                    {restaurant.paymentOptionsLabel && restaurant.paymentOptionsLabel.map && restaurant.paymentOptionsLabel.map((option, index) => (
-                                                        <div key={index} className="flex items-center space-x-3">
-                                                            {getPaymentIcon(option)}
-                                                            <span className="text-gray-700">{option}</span>
+
+                                                    {(restaurant.paymentOptions || []).map((p, idx) => (
+                                                        <div key={`p-${idx}`} className="flex items-center space-x-3">
+                                                            {getPaymentIcon(p)}
+                                                            <span className="text-gray-700">{paymentLabelTH(p)}</span>
                                                         </div>
                                                     ))}
-                                                    {restaurant.serviceOptionsLabel && restaurant.serviceOptionsLabel.map && restaurant.serviceOptionsLabel.map((service, index) => (
-                                                        <div key={index} className="flex items-center space-x-3">
-                                                            {getServiceOptionIcon(service)}
-                                                            <span className="text-gray-700">{service}</span>
+
+                                                    {(restaurant.serviceOptions || []).map((s, idx) => (
+                                                        <div key={`s-${idx}`} className="flex items-center space-x-3">
+                                                            {getServiceOptionIcon(s)}
+                                                            <span className="text-gray-700">{serviceLabelTH(s)}</span>
                                                         </div>
                                                     ))}
                                                 </div>
