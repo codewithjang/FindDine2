@@ -100,10 +100,41 @@ exports.getById = async (req, res) => {
   res.json(transformed);
 };
 
+function safeParseArray(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 exports.create = async (req, res) => {
-  const restaurant = await Restaurant.create(req.body);
-  res.status(201).json(restaurant);
+  try {
+    const body = req.body;
+
+    const cleanData = {
+      ...body,
+      facilities: safeParseArray(body.facilities),
+      paymentOptions: safeParseArray(body.paymentOptions),
+      serviceOptions: safeParseArray(body.serviceOptions),
+      locationStyles: safeParseArray(body.locationStyles),
+      lifestyles: safeParseArray(body.lifestyles),
+      latitude: body.latitude ? parseFloat(body.latitude) : null,
+      longitude: body.longitude ? parseFloat(body.longitude) : null,
+      startingPrice: body.startingPrice ? parseInt(body.startingPrice, 10) : null,
+    };
+
+    const restaurant = await Restaurant.create(cleanData);
+    res.status(201).json({ success: true, restaurant });
+  } catch (err) {
+    console.error("❌ Create restaurant error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 };
+
 
 exports.update = async (req, res) => {
   try {
