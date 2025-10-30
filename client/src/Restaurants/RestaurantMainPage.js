@@ -5,6 +5,7 @@ import bg from '../assets/bg/bgMainRes.png';
 import RestaurantMap from '../component/RestaurantMap';
 import { Link, useParams } from 'react-router-dom';
 import bannerBg from '../assets/bg/Banner.png';
+import ResBookingsList from '../component/ResBookingsList';
 import {
     Bell,
     Calendar,
@@ -770,6 +771,7 @@ export default function RestaurantDashboard() {
                             </h3>
                             <BookingSettingStatus restaurantId={restaurantId} />
                         </div>
+                        <ResBookingsList />
                     </div>
                 )}
 
