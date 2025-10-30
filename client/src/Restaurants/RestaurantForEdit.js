@@ -97,34 +97,37 @@ export default function RestaurantForEdit() {
             const token = localStorage.getItem('token');
 
             if (isEditMode) {
-                // PUT: ส่งเป็น JSON (ตามโค้ดเดิมของโปรเจกต์)
-                // ตัดไฟล์ออก (ถ้าจะอัปเดตรูปต้องรองรับ endpoint multipart เพิ่มเติม)
-                const payload = { ...formData };
-                payload.photos = payload.photos.filter(p => !(p instanceof File));
-                // ✅ แปลงค่าที่ควรเป็นตัวเลข
-                if (payload.startingPrice !== null && payload.startingPrice !== undefined && payload.startingPrice !== '') {
-                    payload.startingPrice = parseInt(payload.startingPrice, 10);
-                } else {
-                    payload.startingPrice = null;
-                }
+                const fd = new FormData();
 
-                if (payload.latitude) payload.latitude = parseFloat(payload.latitude);
-                if (payload.longitude) payload.longitude = parseFloat(payload.longitude);
-                // ให้แน่ใจว่า fields แบบลิสต์เป็นอาเรย์ (หรือสตริง JSON ถ้า backend ต้องการ)
-                // ถ้า backend คาดเป็นสตริง JSON ให้ uncomment บรรทัดด้านล่าง:
-                // payload.paymentOptions = JSON.stringify(payload.paymentOptions || []);
-                // payload.facilities = JSON.stringify(payload.facilities || []);
-                // payload.serviceOptions = JSON.stringify(payload.serviceOptions || []);
-                // payload.locationStyles = JSON.stringify(payload.locationStyles || []);
-                // payload.lifestyles = JSON.stringify(payload.lifestyles || []);
+                // แนบข้อมูลพื้นฐาน
+                const fields = [
+                    "restaurantName", "foodType", "email", "address", "nearbyPlaces",
+                    "phone", "priceRange", "startingPrice", "description", "latitude", "longitude"
+                ];
+                fields.forEach(k => fd.append(k, formData[k] ?? ""));
 
-                await axios.put(
-                    `http://localhost:3001/api/restaurants/${restaurantId}`,
-                    payload,
-                    token ? { headers: { Authorization: `Bearer ${token}` } } : {}
-                );
-                alert('✅ แก้ไขข้อมูลเรียบร้อยแล้ว');
-            } else {
+                // แนบ array fields
+                fd.append("facilities", JSON.stringify(formData.facilities || []));
+                fd.append("paymentOptions", JSON.stringify(formData.paymentOptions || []));
+                fd.append("serviceOptions", JSON.stringify(formData.serviceOptions || []));
+                fd.append("locationStyles", JSON.stringify(formData.locationStyles || []));
+                fd.append("lifestyles", JSON.stringify(formData.lifestyles || []));
+
+                // แนบรูปเดิม (ถ้ายังไม่ถูกลบ)
+                fd.append("photos", JSON.stringify(formData.photos.filter(p => !(p instanceof File))));
+
+                // แนบรูปใหม่
+                formData.photos.forEach(f => {
+                    if (f instanceof File) fd.append("photos", f, f.name);
+                });
+
+                await fetch(`http://localhost:3001/api/restaurants/${restaurantId}`, {
+                    method: "PUT",
+                    body: fd,
+                });
+                alert("✅ แก้ไขข้อมูลร้านเรียบร้อยแล้ว");
+            }
+            else {
                 // POST register: ใช้ multipart/form-data (รองรับอัปโหลดรูป)
                 const fd = new FormData();
                 const keysAsText = [

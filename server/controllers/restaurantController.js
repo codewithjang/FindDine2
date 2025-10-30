@@ -140,8 +140,9 @@ exports.update = async (req, res) => {
   try {
     const id = Number(req.params.id);
     let data = req.body;
+    const files = req.files || [];
 
-    // ✅ ลบ field ที่ Prisma ไม่รู้จัก
+    // ลบคีย์ที่ไม่จำเป็น
     const invalidKeys = [
       'id', 'createdAt', 'updatedAt',
       'foodTypeLabel', 'facilitiesLabel',
@@ -150,19 +151,47 @@ exports.update = async (req, res) => {
     ];
     invalidKeys.forEach(k => delete data[k]);
 
-    // ✅ แปลงค่าที่ควรเป็นตัวเลข
+    // แปลงค่าตัวเลข
     if (data.startingPrice) data.startingPrice = parseInt(data.startingPrice, 10);
     if (data.latitude) data.latitude = parseFloat(data.latitude);
     if (data.longitude) data.longitude = parseFloat(data.longitude);
 
-    const restaurant = await Restaurant.update(id, data);
-    res.status(200).json(restaurant);
+    // ✅ แปลง fields จาก JSON string -> array (ถ้ามี)
+    const parseArray = (v) => {
+      if (!v) return [];
+      try { return JSON.parse(v); } catch { return []; }
+    };
 
+    // ✅ โหลดรูปเดิมจาก body (หากยังเหลือ)
+    const oldPhotos = parseArray(data.photos);
+
+    // ✅ เพิ่มรูปใหม่ที่อัปโหลดเข้ามา
+    const newPhotos = files.map((f, i) => ({
+      url: `${req.protocol}://${req.get('host')}/uploads/${f.filename}`,
+      isPrimary: oldPhotos.length === 0 && i === 0
+    }));
+
+    // ✅ รวมรูปทั้งหมดเข้าด้วยกัน
+    const mergedPhotos = [...oldPhotos, ...newPhotos];
+    data.photos = JSON.stringify(mergedPhotos);
+
+    // ✅ stringify fields อื่น ๆ ที่เป็น array
+    const jsonFields = ['facilities', 'paymentOptions', 'serviceOptions', 'locationStyles', 'lifestyles'];
+    jsonFields.forEach(field => {
+      if (data[field] && typeof data[field] !== 'string') {
+        data[field] = JSON.stringify(data[field]);
+      }
+    });
+
+    const restaurant = await Restaurant.update(id, data);
+    res.status(200).json({ success: true, restaurant });
   } catch (error) {
     console.error('❌ update restaurant error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 };
+
+
 
 
 

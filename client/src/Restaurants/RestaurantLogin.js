@@ -116,7 +116,7 @@ const RestaurantLogin = () => {
                     <p>
                         ยังไม่มีบัญชี?
                         <a
-                            href="/"
+                            href="/RestaurantRegist"
                             className="text-orange-600 hover:underline ml-1"
                             onClick={() => {
                                 // Add navigation logic to registration page
