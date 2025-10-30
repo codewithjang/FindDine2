@@ -731,7 +731,7 @@ export default function RestaurantRegistration() {
                 )}
 
                 <div className="mt-4 text-center text-sm text-gray-500">
-                    <p>มีบัญชีอยู่แล้ว? <a href="/" className="text-orange-600 hover:underline">เข้าสู่ระบบ</a></p>
+                    <p>มีบัญชีอยู่แล้ว? <a href="/RestaurantLogin" className="text-orange-600 hover:underline">เข้าสู่ระบบ</a></p>
                 </div>
 
                 {/* Google Login Button */}
