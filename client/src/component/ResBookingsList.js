@@ -1,61 +1,43 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Edit, Trash2, Eye } from "lucide-react";
 
-const ResBookingsList = () => {
-  const mockBookings = [
-    {
-      id: 1,
-      customerName: "สมชาย ใจดี",
-      phone: "0812345678",
-      guests: 4,
-      date: "2025-11-01",
-      time: "18:00",
-      note: "อยากได้โต๊ะริมหน้าต่าง",
-      status: "รอการยืนยัน",
-    },
-    {
-      id: 2,
-      customerName: "Jane Doe",
-      phone: "0999999999",
-      guests: 2,
-      date: "2025-11-02",
-      time: "19:30",
-      note: "-",
-      status: "ยืนยันแล้ว",
-    },
-    {
-      id: 3,
-      customerName: "อาเหม็ด บินฮาซัน",
-      phone: "0822222222",
-      guests: 6,
-      date: "2025-11-03",
-      time: "20:00",
-      note: "ลูกค้าวีไอพี",
-      status: "ยกเลิก",
-    },
-  ];
+export default function ResBookingsList({ restaurantId }) {
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);
 
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case "ยืนยันแล้ว":
-        return "bg-green-100 text-green-700";
-      case "ยกเลิก":
-        return "bg-red-100 text-red-700";
-      default:
-        return "bg-yellow-100 text-yellow-700";
-    }
-  };
+  useEffect(() => {
+    if (!restaurantId) return;
+    setLoading(true);
+    axios
+      .get(`http://localhost:3001/api/bookings/restaurant/${restaurantId}`)
+      .then((res) => setRows(res.data || []))
+      .catch((e) => {
+        console.error("fetch bookings error:", e);
+        setErr("ไม่สามารถโหลดข้อมูลการจองได้");
+      })
+      .finally(() => setLoading(false));
+  }, [restaurantId]);
+
+  if (loading) return <p className="text-gray-500 text-center">กำลังโหลด...</p>;
+  if (err) return <p className="text-red-500 text-center">{err}</p>;
+  if (!rows.length)
+    return <p className="text-gray-500 text-center">ยังไม่มีรายการจอง</p>;
+
+  const getStatusStyle = (status) =>
+    status === "ยืนยันแล้ว"
+      ? "bg-green-100 text-green-700"
+      : status === "ยกเลิก"
+      ? "bg-red-100 text-red-700"
+      : "bg-yellow-100 text-yellow-700";
 
   return (
     <div className="bg-[#fff8f3] border border-gray-200 rounded-2xl p-6 shadow-lg">
-      {/* Header Section */}
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-          📋 รายการการจองโต๊ะของลูกค้า
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-800">📋 รายการการจองโต๊ะของลูกค้า</h2>
       </div>
 
-      {/* Table Section */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead className="bg-orange-50 text-gray-700 text-sm uppercase">
@@ -66,39 +48,25 @@ const ResBookingsList = () => {
               <th className="py-3 px-4 font-medium text-center">วันที่</th>
               <th className="py-3 px-4 font-medium text-center">เวลา</th>
               <th className="py-3 px-4 font-medium">หมายเหตุ</th>
-              <th className="py-3 px-4 font-medium text-center">สถานะ</th>
               <th className="py-3 px-4 font-medium text-center">การจัดการ</th>
             </tr>
           </thead>
-
           <tbody className="bg-white divide-y divide-gray-100">
-            {mockBookings.map((booking) => (
-              <tr
-                key={booking.id}
-                className="hover:bg-orange-50 transition duration-150"
-              >
-                <td className="py-3 px-4 font-medium text-gray-800">
-                  {booking.customerName}
-                </td>
-                <td className="py-3 px-4 text-gray-600">{booking.phone}</td>
+            {rows.map((b) => (
+              <tr key={b.id} className="hover:bg-orange-50 transition duration-150">
+                <td className="py-3 px-4 font-medium text-gray-800">{b.customerName}</td>
+                <td className="py-3 px-4 text-gray-600">{b.customerPhone}</td>
+                <td className="py-3 px-4 text-center text-gray-600">{b.guests}</td>
                 <td className="py-3 px-4 text-center text-gray-600">
-                  {booking.guests}
+                  {new Date(b.date).toLocaleDateString("th-TH", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
                 </td>
-                <td className="py-3 px-4 text-center text-gray-600">
-                  {booking.date}
-                </td>
-                <td className="py-3 px-4 text-center text-gray-600">
-                  {booking.time}
-                </td>
-                <td className="py-3 px-4 text-gray-600">{booking.note}</td>
-                <td className="py-3 px-4 text-center">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyle(
-                      booking.status
-                    )}`}
-                  >
-                    {booking.status}
-                  </span>
+                <td className="py-3 px-4 text-center text-gray-600">{b.time}</td>
+                <td className="py-3 px-4 text-gray-600">
+                  {b.specialRequests && b.specialRequests.trim() ? b.specialRequests : "-"}
                 </td>
                 <td className="py-3 px-4 text-center flex justify-center gap-3">
                   <button className="text-orange-500 hover:text-orange-600">
@@ -117,12 +85,9 @@ const ResBookingsList = () => {
         </table>
       </div>
 
-      {/* Footer Summary */}
       <div className="flex justify-end mt-4 text-sm text-gray-500">
-        รวมทั้งหมด {mockBookings.length} รายการ
+        รวมทั้งหมด {rows.length} รายการ
       </div>
     </div>
   );
-};
-
-export default ResBookingsList;
+}

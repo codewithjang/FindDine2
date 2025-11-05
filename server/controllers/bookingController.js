@@ -25,3 +25,15 @@ exports.delete = async (req, res) => {
   await Booking.delete(Number(req.params.id));
   res.status(204).end();
 };
+
+exports.getByRestaurant = async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+    const rows = await Booking.findByRestaurantId(restaurantId);
+    res.json(rows);
+  } catch (e) {
+    console.error('getByRestaurant error:', e);
+    res.status(500).json({ error: 'Failed to get bookings by restaurant' });
+  }
+};
+

@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 const { sendMail } = require('../utils/mailer');
 
 router.get('/', bookingController.getAll);
+router.get('/restaurant/:restaurantId', bookingController.getByRestaurant);
 router.get('/:id', bookingController.getById);
 
 // ✅ POST: ลูกค้าทำการจองโต๊ะ

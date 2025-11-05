@@ -771,7 +771,9 @@ export default function RestaurantDashboard() {
                             </h3>
                             <BookingSettingStatus restaurantId={restaurantId} />
                         </div>
-                        <ResBookingsList />
+
+                        {/* ✅ ส่ง restaurantId ให้ ResBookingsList */}
+                        <ResBookingsList restaurantId={restaurantId} />
                     </div>
                 )}
 
