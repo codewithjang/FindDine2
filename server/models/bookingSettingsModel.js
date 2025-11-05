@@ -2,13 +2,12 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 exports.getBookingSettingByRestaurant = async (restaurantId) => {
-  return await prisma.bookingSetting.findUnique({
+  return await prisma.bookingsetting.findUnique({
     where: { restaurantId: parseInt(restaurantId) },
   });
 };
 
 exports.saveOrUpdateBookingSetting = async (restaurantId, data) => {
-  // ✅ แปลงค่าที่ควรเป็นตัวเลขก่อนส่งเข้า Prisma
   const parsedData = {
     allowBooking: !!data.allowBooking,
     maxGuests: data.maxGuests ? parseInt(data.maxGuests) : null,
@@ -21,7 +20,7 @@ exports.saveOrUpdateBookingSetting = async (restaurantId, data) => {
     policyNotes: data.policyNotes || "",
   };
 
-  return await prisma.bookingSetting.upsert({
+  return await prisma.bookingsetting.upsert({
     where: { restaurantId: parseInt(restaurantId) },
     update: parsedData,
     create: {

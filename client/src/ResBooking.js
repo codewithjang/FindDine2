@@ -177,15 +177,31 @@ const RestaurantBooking = () => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            setBookingSuccess(true);
+            const payload = {
+                restaurantId,
+                date: bookingData.date,
+                time: bookingData.time,
+                guests: bookingData.guests || 1,
+                customerName: bookingData.customerName,
+                customerPhone: bookingData.customerPhone,
+                customerEmail: bookingData.customerEmail || null,
+                specialRequests: bookingData.specialRequests || null,
+            };
+
+            const res = await axios.post("http://localhost:3001/api/bookings", payload);
+            if (res.data?.success) {
+                setBookingSuccess(true);
+            } else {
+                alert("การจองไม่สำเร็จ");
+            }
         } catch (error) {
-            console.error(error);
+            console.error("Booking Error:", error);
             alert("เกิดข้อผิดพลาดในการจอง");
         } finally {
             setIsSubmitting(false);
         }
     };
+
 
     const renderStars = (rating) => {
         return [...Array(5)].map((_, i) => (
@@ -413,7 +429,7 @@ const RestaurantBooking = () => {
                             </div>
                             <input
                                 type="email"
-                                placeholder="อีเมล (ไม่บังคับ)"
+                                placeholder="อีเมล"
                                 value={bookingData.customerEmail}
                                 onChange={(e) =>
                                     handleInputChange("customerEmail", e.target.value)
