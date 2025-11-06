@@ -854,15 +854,13 @@ export default function RestaurantDashboard() {
                                                                 </span>
                                                             </div>
                                                             <span
-                                                                className={`px-3 py-1 rounded-full text-sm font-medium ${restaurant.isOpen
-                                                                    ? 'bg-green-100 text-green-800'
-                                                                    : 'bg-red-100 text-red-800'
+                                                                className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${restaurant.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                                                     }`}
                                                             >
-                                                                <Clock className="w-4 h-4 inline mr-1" />
+                                                                <Clock className="w-4 h-4" />
                                                                 {restaurant.isOpen
-                                                                    ? `เปิดอยู่ • ปิด ${restaurant.closeTime} น.`
-                                                                    : 'ปิดแล้ว'}
+                                                                    ? `เปิดอยู่ (${restaurant.openTime || '-'} - ${restaurant.closeTime || '-'} น.)`
+                                                                    : `ปิด (${restaurant.openTime || '-'} - ${restaurant.closeTime || '-'} น.)`}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -944,7 +942,7 @@ export default function RestaurantDashboard() {
                                                                     <div>
                                                                         <p className="font-medium">เวลาเปิด-ปิด</p>
                                                                         <p className="text-gray-600 text-sm">
-                                                                            {restaurant.openTime} - {restaurant.closeTime} น.
+                                                                            {restaurant.openTime || '-'} - {restaurant.closeTime || '-'} น.
                                                                         </p>
                                                                     </div>
                                                                 </div>
