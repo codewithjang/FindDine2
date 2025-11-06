@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Clock, Users, Calendar, Edit3, Save, AlertCircle } from "lucide-react";
+import { Clock, Edit3, Save, AlertCircle } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 
 export default function BookingSettings() {
   const { id } = useParams(); // restaurantId
   const navigate = useNavigate();
+
   const [settings, setSettings] = useState({
     allowBooking: true,
     maxGuests: 10,
@@ -17,27 +18,63 @@ export default function BookingSettings() {
     closeTime: "22:00",
     policyNotes: "",
   });
+  const [restaurantHours, setRestaurantHours] = useState({ openTime: "", closeTime: "" });
+  const [warning, setWarning] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // ✅ โหลดข้อมูลการตั้งค่า booking
   useEffect(() => {
     if (!id) return;
-    axios.get(`http://localhost:3001/api/booking-settings/${id}`)
-      .then(res => {
+    axios
+      .get(`http://localhost:3001/api/booking-settings/${id}`)
+      .then((res) => {
         if (res.data) setSettings(res.data);
       })
       .catch(() => console.log("ยังไม่มีการตั้งค่า ใช้ค่า default"))
-      .finally(() => setLoading(false));
+      .finally(() => setLoading(false)); // สำคัญมาก
   }, [id]);
 
+  // ✅ โหลดเวลาเปิด–ปิดร้านจริง
+  useEffect(() => {
+    if (!id) return;
+    axios
+      .get(`http://localhost:3001/api/restaurants/${id}`)
+      .then((res) => {
+        if (res.data)
+          setRestaurantHours({
+            openTime: res.data.openTime,
+            closeTime: res.data.closeTime,
+          });
+      })
+      .catch((err) => console.error("โหลดข้อมูลร้านไม่สำเร็จ:", err));
+  }, [id]);
+
+  // ✅ ตรวจสอบเวลาจองอยู่นอกช่วงร้านไหม
+  useEffect(() => {
+    if (!restaurantHours.openTime || !restaurantHours.closeTime) return;
+    const { openTime: restOpen, closeTime: restClose } = restaurantHours;
+    const { openTime: bookOpen, closeTime: bookClose } = settings;
+
+    if (bookOpen < restOpen || bookClose > restClose) {
+      setWarning(
+        `⚠️ เวลาที่เปิดหรือปิดรับจองอยู่นอกเหนือเวลาเปิดร้านจริง (${restOpen} - ${restClose})`
+      );
+    } else {
+      setWarning("");
+    }
+  }, [settings.openTime, settings.closeTime, restaurantHours]);
+
+  // ✅ อัปเดตค่าในฟอร์ม
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
 
+  // ✅ บันทึกการตั้งค่า
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -53,7 +90,6 @@ export default function BookingSettings() {
   };
 
   if (loading) return <div className="flex justify-center items-center h-screen">กำลังโหลด...</div>;
-
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
       <div className="max-w-3xl mx-auto bg-white rounded-xl shadow-md p-6">
@@ -86,6 +122,12 @@ export default function BookingSettings() {
                   className="w-full px-3 py-2 border rounded-lg"
                 />
               </div>
+              {warning && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-orange-600 bg-orange-50 p-2 rounded-md">
+                  <AlertCircle className="w-4 h-4 text-orange-500" />
+                  <span>{warning}</span>
+                </div>
+              )}
             </div>
 
             <div>
