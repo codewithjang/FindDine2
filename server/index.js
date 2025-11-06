@@ -184,7 +184,7 @@ app.post("/api/restaurants/register", upload.array("photos", 10), async (req, re
         locationStyles: toJSONString(parseMaybeJSON(locationStyles)),
         lifestyles: toJSONString(parseMaybeJSON(lifestyles)),
         photos: toJSONString(photoObjs),
-        openTime,    
+        openTime,
         closeTime
       },
     });
@@ -287,6 +287,24 @@ app.get("/api/restaurants/:id", async (req, res) => {
     res.status(500).json({ error: "Failed to fetch restaurant" });
   }
 });
+
+// ===== Toggle Booking Availability =====
+app.put("/api/restaurants/:id/toggle-booking", async (req, res) => {
+  const { id } = req.params;
+  const { isBookingOpen } = req.body;
+
+  try {
+    const restaurant = await prisma.restaurant.update({
+      where: { id: parseInt(id) },
+      data: { isBookingOpen },
+    });
+    res.json({ success: true, restaurant });
+  } catch (error) {
+    console.error("Error updating booking status:", error);
+    res.status(500).json({ success: false, message: "Failed to update booking status" });
+  }
+});
+
 
 
 // ===== Search Restaurants =====

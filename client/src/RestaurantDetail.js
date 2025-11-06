@@ -591,13 +591,23 @@ const RestaurantDetail = (props) => {
             {/* Contact Actions */}
             {Array.isArray(restaurant.serviceOptions) && restaurant.serviceOptions.includes('accepts_reservation') && (
               <div>
-                <Link
-                  to={`/ResBooking/${restaurantId}`}
-                  className="block w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-800 transition-colors font-medium text-center"
-                >
-                  <Calendar className="w-4 h-4 inline mr-2" />
-                  จองโต๊ะ
-                </Link>
+                {restaurant.isBookingOpen ? (
+                  <Link
+                    to={`/ResBooking/${restaurantId}`}
+                    className="block w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-800 transition-colors font-medium text-center"
+                  >
+                    <Calendar className="w-4 h-4 inline mr-2" />
+                    จองโต๊ะ
+                  </Link>
+                ) : (
+                  <button
+                    disabled
+                    className="block w-full bg-gray-400 text-white py-3 rounded-lg cursor-not-allowed font-medium text-center"
+                  >
+                    <Calendar className="w-4 h-4 inline mr-2" />
+                    ปิดการจองในขณะนี้
+                  </button>
+                )}
               </div>
             )}
           </div>

@@ -772,7 +772,31 @@ export default function RestaurantDashboard() {
                             <BookingSettingStatus restaurantId={restaurantId} />
                         </div>
 
-                        {/* ✅ ส่ง restaurantId ให้ ResBookingsList */}
+                        {/* 🔘 สวิตช์เปิด/ปิดการจอง */}
+                        <div className="flex items-center justify-center gap-3 mt-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <span className="text-gray-700 font-medium">สถานะการจองโต๊ะ:</span>
+                                <input
+                                    type="checkbox"
+                                    checked={restaurant?.isBookingOpen}
+                                    onChange={(e) => {
+                                        const newStatus = e.target.checked;
+                                        axios.put(`http://localhost:3001/api/restaurants/${restaurantId}/toggle-booking`, {
+                                            isBookingOpen: newStatus,
+                                        })
+                                            .then(() => {
+                                                setRestaurant((prev) => ({ ...prev, isBookingOpen: newStatus }));
+                                            })
+                                            .catch(() => alert("ไม่สามารถอัปเดตสถานะการจองได้"));
+                                    }}
+                                    className="toggle-checkbox accent-orange-500 w-5 h-5"
+                                />
+                                <span className={restaurant?.isBookingOpen ? "text-green-600 font-semibold" : "text-gray-500"}>
+                                    {restaurant?.isBookingOpen ? "เปิดอยู่" : "ปิดอยู่"}
+                                </span>
+                            </label>
+                        </div>
+
                         <ResBookingsList restaurantId={restaurantId} />
                     </div>
                 )}

@@ -16,6 +16,7 @@ model restaurant {
   updatedAt        DateTime        @default(now()) @updatedAt
   openTime         String?         @db.VarChar(10)
   closeTime        String?         @db.VarChar(10)
+  isBookingOpen    Boolean         @default(true)
   email            String          @unique(map: "Restaurant_email_key")
   facilities       String?         @db.LongText
   foodType         String
