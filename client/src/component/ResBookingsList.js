@@ -69,14 +69,8 @@ export default function ResBookingsList({ restaurantId }) {
                   {b.specialRequests && b.specialRequests.trim() ? b.specialRequests : "-"}
                 </td>
                 <td className="py-3 px-4 text-center flex justify-center gap-3">
-                  <button className="text-orange-500 hover:text-orange-600">
-                    <Eye size={18} />
-                  </button>
-                  <button className="text-blue-500 hover:text-blue-600">
+                  <button className="text-blue-500 hover:text-orange-800">
                     <Edit size={18} />
-                  </button>
-                  <button className="text-red-500 hover:text-red-600">
-                    <Trash2 size={18} />
                   </button>
                 </td>
               </tr>

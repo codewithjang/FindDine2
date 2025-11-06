@@ -23,6 +23,8 @@ export default function RestaurantRegistration() {
         priceRange: '',
         startingPrice: '',
         description: '',
+        openTime: '',
+        closeTime: '',
 
         // Step 3
         facilities: [],
@@ -274,6 +276,8 @@ export default function RestaurantRegistration() {
                 "priceRange",     // String?
                 "startingPrice",  // Int? (backend จะ parseInt เอง ถ้าว่างจะเป็น null)
                 "description",
+                "openTime",
+                "closeTime"
             ];
             primitives.forEach(k => fd.append(k, formData[k] ?? ""));
 
@@ -487,6 +491,29 @@ export default function RestaurantRegistration() {
                     required
                 />
                 {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
+            </div>
+
+            <div className="flex gap-4">
+                <div className="w-1/2">
+                    <label className="block text-sm text-gray-600 mb-1">เวลาเปิดร้าน</label>
+                    <input
+                        name="openTime"
+                        type="time"
+                        value={formData.openTime}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 border-gray-300"
+                    />
+                </div>
+                <div className="w-1/2">
+                    <label className="block text-sm text-gray-600 mb-1">เวลาปิดร้าน</label>
+                    <input
+                        name="closeTime"
+                        type="time"
+                        value={formData.closeTime}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 border-gray-300"
+                    />
+                </div>
             </div>
 
             <div className="flex gap-4">

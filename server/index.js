@@ -149,6 +149,8 @@ app.post("/api/restaurants/register", upload.array("photos", 10), async (req, re
       serviceOptions,
       locationStyles,
       lifestyles,
+      openTime,
+      closeTime
     } = req.body;
 
     const existing = await prisma.restaurant.findUnique({ where: { email } });
@@ -182,6 +184,8 @@ app.post("/api/restaurants/register", upload.array("photos", 10), async (req, re
         locationStyles: toJSONString(parseMaybeJSON(locationStyles)),
         lifestyles: toJSONString(parseMaybeJSON(lifestyles)),
         photos: toJSONString(photoObjs),
+        openTime,    
+        closeTime
       },
     });
 
