@@ -87,6 +87,56 @@ router.post('/', async (req, res) => {
     }
 });
 
+// ✅ อีเมลแจ้งลูกค้าเมื่อร้านตอบรับหรือปฏิเสธ
+router.post('/notify', async (req, res) => {
+    try {
+        const { bookingId, status, message } = req.body;
+
+        // ดึงข้อมูลการจอง
+        const booking = await prisma.booking.findUnique({
+            where: { id: Number(bookingId) },
+        });
+        if (!booking || !booking.customerEmail)
+            return res.status(404).json({ error: 'ไม่พบข้อมูลอีเมลลูกค้า' });
+
+        // สร้างเนื้อหาอีเมล
+        const subject =
+            status === 'confirmed'
+                ? `✅ การจองของคุณได้รับการยืนยันแล้ว`
+                : `❌ การจองของคุณถูกปฏิเสธ`;
+
+        const html = `
+      <div style="font-family:sans-serif;line-height:1.6">
+        <h2>${subject}</h2>
+        <p>เรียนคุณ ${booking.customerName},</p>
+        <p>
+          ร้านอาหารของคุณได้ทำการ
+          <b>${status === 'confirmed' ? 'ยืนยัน' : 'ปฏิเสธ'}</b> 
+          การจองของคุณไว้เรียบร้อยแล้ว
+        </p>
+        <p><b>วันเวลา:</b> ${booking.date.toLocaleDateString()} ${booking.time}</p>
+        <p><b>จำนวนคน:</b> ${booking.guests}</p>
+        <p><b>รายละเอียดเพิ่มเติมจากร้าน:</b></p>
+        <blockquote>${message || '-'}</blockquote>
+        <hr/>
+        <p>ขอบคุณที่ใช้บริการ FindDine 💛</p>
+      </div>
+    `;
+
+        // ส่งอีเมล
+        await sendMail({
+            to: booking.customerEmail,
+            subject,
+            html,
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('❌ sendMail Error:', error);
+        res.status(500).json({ error: 'ส่งอีเมลไม่สำเร็จ' });
+    }
+});
+
 router.put('/:id', bookingController.update);
 router.delete('/:id', bookingController.delete);
 
