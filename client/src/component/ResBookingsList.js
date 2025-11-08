@@ -9,7 +9,7 @@ export default function ResBookingsList({ restaurantId }) {
   const [selected, setSelected] = useState(null);
   const [note, setNote] = useState("");
   const [noteType, setNoteType] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // ✅ loading ระหว่างส่งอีเมล
+  const [isLoading, setIsLoading] = useState(false); // ระหว่างส่งอีเมล
 
   // โหลดข้อมูลการจอง
   useEffect(() => {
@@ -18,31 +18,25 @@ export default function ResBookingsList({ restaurantId }) {
     axios
       .get(`http://localhost:3001/api/bookings/restaurant/${restaurantId}`)
       .then((res) => setRows(res.data || []))
-      .catch((e) => {
-        console.error("fetch bookings error:", e);
-        setErr("ไม่สามารถโหลดข้อมูลการจองได้");
-      })
+      .catch(() => setErr("ไม่สามารถโหลดข้อมูลการจองได้"))
       .finally(() => setLoading(false));
   }, [restaurantId]);
 
   // ส่งอีเมลแจ้งลูกค้า + อัปเดตสถานะ
   const handleNotify = async (status) => {
     if (!selected) return;
-    setIsLoading(true); // ✅ เริ่มโหลด
+    setIsLoading(true);
     try {
       await axios.post("http://localhost:3001/api/bookings/notify", {
         bookingId: selected.id,
         status,
         message: note,
       });
-
       setRows((prev) =>
         prev.map((r) =>
           r.id === selected.id ? { ...r, status } : r
         )
       );
-
-      // แจ้งผลลัพธ์
       alert("✅ ส่งอีเมลแจ้งลูกค้าเรียบร้อยแล้ว!");
       setSelected(null);
       setNote("");
@@ -51,10 +45,9 @@ export default function ResBookingsList({ restaurantId }) {
       console.error(error);
       alert("❌ ส่งอีเมลไม่สำเร็จ");
     } finally {
-      setIsLoading(false); // ✅ ปิดโหลด
+      setIsLoading(false);
     }
   };
-
 
   if (loading) return <p className="text-gray-500 text-center">กำลังโหลด...</p>;
   if (err) return <p className="text-red-500 text-center">{err}</p>;
@@ -77,7 +70,7 @@ export default function ResBookingsList({ restaurantId }) {
               <th className="py-3 px-4 text-center">วันที่</th>
               <th className="py-3 px-4 text-center">เวลา</th>
               <th className="py-3 px-4">หมายเหตุ</th>
-              <th className="py-3 px-4 text-center">จัดการ</th>
+              <th className="py-3 px-4 text-center">การจัดการ</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
@@ -85,8 +78,8 @@ export default function ResBookingsList({ restaurantId }) {
               <tr
                 key={b.id}
                 className={`transition duration-150 ${b.status !== "pending"
-                  ? "bg-gray-100 text-gray-400"
-                  : "hover:bg-orange-50"
+                    ? "bg-gray-100 text-gray-500"
+                    : "hover:bg-orange-50"
                   }`}
               >
                 <td className="py-3 px-4 font-medium">{b.customerName}</td>
@@ -100,24 +93,32 @@ export default function ResBookingsList({ restaurantId }) {
                   })}
                 </td>
                 <td className="py-3 px-4 text-center">{b.time}</td>
-                <td className="py-3 px-4">
-                  {b.specialRequests?.trim() || "-"}
-                </td>
+                <td className="py-3 px-4">{b.specialRequests?.trim() || "-"}</td>
+
+                {/* ✅ เพิ่มข้อความสถานะในคอลัมน์การจัดการ */}
                 <td className="py-3 px-4 text-center">
-                  <button
-                    onClick={() => {
-                      setSelected(b);
-                      setNote("");
-                      setNoteType(null);
-                    }}
-                    disabled={b.status !== "pending"}
-                    className={`${b.status !== "pending"
-                      ? "text-gray-400 cursor-not-allowed"
-                      : "text-blue-500 hover:text-orange-700"
-                      }`}
-                  >
-                    <Edit size={18} />
-                  </button>
+                  <div className="flex flex-row items-center gap-2 justify-center">
+                    <button
+                      onClick={() => {
+                        setSelected(b);
+                        setNote("");
+                        setNoteType(null);
+                      }}
+                      className="text-orange-500 hover:text-orange-700"
+                    >
+                      <Edit size={18} />
+                    </button>
+                    {b.status === "confirmed" && (
+                      <span className="text-green-600 text-xs">
+                        ✅ยืนยันแล้ว
+                      </span>
+                    )}
+                    {b.status === "rejected" && (
+                      <span className="text-red-600 text-xs">
+                        ❌ปฏิเสธแล้ว
+                      </span>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -129,7 +130,7 @@ export default function ResBookingsList({ restaurantId }) {
         รวมทั้งหมด {rows.length} รายการ
       </div>
 
-      {/* Modal */}
+      {/* ✅ Modal */}
       {selected && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative border-t-8 border-orange-400">
@@ -156,26 +157,46 @@ export default function ResBookingsList({ restaurantId }) {
               รายละเอียดการจอง
             </h3>
 
+            {/* ✅ แสดงสถานะใน Modal */}
+            {selected.status !== "pending" && (
+              <div className="text-center mb-4">
+                <p className="text-sm text-gray-500 font-medium">
+                  คุณได้ทำการ{" "}
+                  {selected.status === "confirmed"
+                    ? "✅ ตอบรับ"
+                    : "❌ ปฏิเสธ"}{" "}
+                  การจองนี้เรียบร้อยแล้ว
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2 bg-orange-50 rounded-lg p-4 mb-4 text-sm text-gray-700">
-              <p><b>ชื่อลูกค้า:</b> {selected.customerName}</p>
-              <p><b>เบอร์โทร:</b> {selected.customerPhone}</p>
-              <p><b>อีเมล:</b> {selected.customerEmail || "-"}</p>
-              <p><b>วันที่:</b> {new Date(selected.date).toLocaleDateString("th-TH")}</p>
-              <p><b>เวลา:</b> {selected.time}</p>
-              <p><b>จำนวนคน:</b> {selected.guests}</p>
-              <p><b>คำขอพิเศษ:</b> {selected.specialRequests || "-"}</p>
+              <p>
+                <b>ชื่อลูกค้า:</b> {selected.customerName}
+              </p>
+              <p>
+                <b>เบอร์โทร:</b> {selected.customerPhone}
+              </p>
+              <p>
+                <b>อีเมล:</b> {selected.customerEmail || "-"}
+              </p>
+              <p>
+                <b>วันที่:</b>{" "}
+                {new Date(selected.date).toLocaleDateString("th-TH")}
+              </p>
+              <p>
+                <b>เวลา:</b> {selected.time}
+              </p>
+              <p>
+                <b>จำนวนคน:</b> {selected.guests}
+              </p>
+              <p>
+                <b>คำขอพิเศษ:</b> {selected.specialRequests || "-"}
+              </p>
             </div>
 
-            {/* ถ้าตอบแล้ว */}
-            {selected.status !== "pending" ? (
-              <p className="text-center text-gray-500 font-medium">
-                คุณได้ทำการ{" "}
-                {selected.status === "confirmed"
-                  ? "ตอบรับ"
-                  : "ปฏิเสธ"}{" "}
-                การจองนี้เรียบร้อยแล้ว
-              </p>
-            ) : (
+            {/* ✅ ถ้ายังไม่ได้ตอบ */}
+            {selected.status === "pending" && (
               <>
                 {!noteType && (
                   <div className="flex justify-center gap-4 mt-3">
