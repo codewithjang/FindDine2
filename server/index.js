@@ -197,61 +197,78 @@ app.post("/api/restaurants/register", upload.array("photos", 10), async (req, re
 });
 
 // ===== Restaurant List =====
-app.get("/api/restaurants", async (req, res) => {
-  const { filter } = req.query;
-  const parseJSON = (v) => {
-    if (!v) return [];
-    try {
-      return JSON.parse(v);
-    } catch {
-      return [];
-    }
-  };
+// app.get("/api/restaurants", async (req, res) => {
+//   const { filter } = req.query;
+//   const parseJSON = (v) => {
+//     if (!v) return [];
+//     try {
+//       return JSON.parse(v);
+//     } catch {
+//       return [];
+//     }
+//   };
 
-  try {
-    const whereClause = {};
-    if (filter) {
-      const contains = (val) => ({ contains: `"${val}"` });
-      switch (filter) {
-        case "halal":
-          whereClause.lifestyles = contains("halal");
-          break;
-        case "reservation":
-          whereClause.serviceOptions = contains("accept_reservation");
-          break;
-        case "in_city":
-          whereClause.locationStyles = contains("in_city");
-          break;
-        case "sea_view":
-          whereClause.locationStyles = contains("sea_view");
-          break;
-        case "natural":
-          whereClause.locationStyles = contains("natural_style");
-          break;
-      }
-    }
+//   try {
+//     const whereClause = {};
+//     if (filter) {
+//       const contains = (val) => ({ contains: `"${val}"` });
+//       switch (filter) {
+//         case "halal":
+//           whereClause.lifestyles = contains("halal");
+//           break;
+//         case "reservation":
+//           whereClause.serviceOptions = contains("accept_reservation");
+//           break;
+//         case "in_city":
+//           whereClause.locationStyles = contains("in_city");
+//           break;
+//         case "sea_view":
+//           whereClause.locationStyles = contains("sea_view");
+//           break;
+//         case "natural":
+//           whereClause.locationStyles = contains("natural_style");
+//           break;
+//       }
+//     }
 
-    const rows = await prisma.restaurant.findMany({
-      where: whereClause,
-      orderBy: { id: "asc" },
-    });
+//     // ✅ ดึงร้าน + รีวิวเฉลี่ยและจำนวน
+//     const restaurants = await prisma.restaurant.findMany({
+//       where: whereClause,
+//       orderBy: { id: "asc" },
+//       include: {
+//         review: {
+//           select: { rating: true },
+//         },
+//       },
+//     });
 
-    const restaurants = rows.map((r) => ({
-      ...r,
-      facilities: parseJSON(r.facilities),
-      paymentOptions: parseJSON(r.paymentOptions),
-      serviceOptions: parseJSON(r.serviceOptions),
-      locationStyles: parseJSON(r.locationStyles),
-      lifestyles: parseJSON(r.lifestyles),
-      photos: parseJSON(r.photos),
-    }));
+//     // ✅ คำนวณค่าเฉลี่ยและจำนวนรีวิว
+//     const results = restaurants.map((r) => {
+//       const ratings = r.review.map((rev) => rev.rating);
+//       const avg =
+//         ratings.length > 0
+//           ? ratings.reduce((sum, val) => sum + val, 0) / ratings.length
+//           : 0;
 
-    res.json(restaurants);
-  } catch (error) {
-    console.error("Error fetching restaurants:", error);
-    res.status(500).json({ error: "Failed to fetch restaurants" });
-  }
-});
+//       return {
+//         ...r,
+//         rating: Number(avg.toFixed(1)),
+//         reviewCount: ratings.length,
+//         facilities: parseJSON(r.facilities),
+//         paymentOptions: parseJSON(r.paymentOptions),
+//         serviceOptions: parseJSON(r.serviceOptions),
+//         locationStyles: parseJSON(r.locationStyles),
+//         lifestyles: parseJSON(r.lifestyles),
+//         photos: parseJSON(r.photos),
+//       };
+//     });
+
+//     res.json(results);
+//   } catch (error) {
+//     console.error("Error fetching restaurants:", error);
+//     res.status(500).json({ error: "Failed to fetch restaurants" });
+//   }
+// });
 
 // ===== Get Restaurant by ID =====
 app.get("/api/restaurants/:id", async (req, res) => {

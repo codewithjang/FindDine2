@@ -85,13 +85,12 @@ export default function MainPage() {
       setRestaurants(originalRestaurants);
       return;
     }
-    const filtered = originalRestaurants.filter(restaurant => {
-      return activeFilters.every(filterId => {
+
+    let filtered = originalRestaurants.filter((restaurant) => {
+      return activeFilters.every((filterId) => {
         switch (filterId) {
           case 'halal':
             return Array.isArray(restaurant.lifestyles) && restaurant.lifestyles.includes('halal');
-          case 'popular':
-            return restaurant.rating >= 4.5;
           case 'accepts_reservation':
             return Array.isArray(restaurant.serviceOptions) && restaurant.serviceOptions.includes('accepts_reservation');
           case 'in_city':
@@ -100,11 +99,23 @@ export default function MainPage() {
             return Array.isArray(restaurant.locationStyles) && restaurant.locationStyles.includes('sea_view');
           case 'natural':
             return Array.isArray(restaurant.locationStyles) && restaurant.locationStyles.includes('natural_style');
+          case 'popular':
+            // ✅ กรองเฉพาะร้านที่มีรีวิว (reviewCount > 0)
+            return (restaurant.reviewCount ?? 0) > 0;
           default:
             return true;
         }
       });
     });
+
+    // ✅ ถ้ามี filter 'popular' ให้เรียงตามคะแนน และจำนวนรีวิว
+    if (activeFilters.includes('popular')) {
+      filtered = [...filtered].sort((a, b) => {
+        if (b.rating !== a.rating) return b.rating - a.rating;          // คะแนนมาก → น้อย
+        return (b.reviewCount ?? 0) - (a.reviewCount ?? 0);              // รีวิวเยอะ → น้อย (กรณีคะแนนเท่ากัน)
+      });
+    }
+
     setRestaurants(filtered);
   }, [activeFilters, originalRestaurants]);
 
@@ -521,9 +532,7 @@ export default function MainPage() {
                   {restaurant.rating > 0 && (
                     <div className="flex items-center space-x-1">
                       {renderStars(restaurant.rating)}
-                      <span className="text-sm text-gray-600 ml-1">
-                        ({restaurant.rating})
-                      </span>
+                      <span className="font-medium">{restaurant.rating}</span>
                     </div>
                   )}
                 </div>
