@@ -548,23 +548,23 @@ const RestaurantDetail = (props) => {
                     <h3 className="text-lg font-semibold mb-4">ข้อมูลร้าน</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="flex items-center space-x-3">
-                        <MapPin className="w-5 h-5 text-gray-400" />
+                        <MapPin className="w-5 h-5 text-orange-500" />
                         <div>
                           <p className="font-medium">ที่อยู่</p>
                           <p className="text-gray-600 text-sm">{restaurant.address}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <Phone className="w-5 h-5 text-gray-400" />
+                        <Phone className="w-5 h-5 text-orange-500" />
                         <div>
                           <p className="font-medium">โทรศัพท์</p>
                           <p className="text-gray-600 text-sm">{restaurant.phone}</p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3 bg-orange-50 rounded-lg p-3">
+                      <div className="flex items-center space-x-3">
                         <Clock className="w-5 h-5 text-orange-500" />
                         <div>
-                          <p className="font-medium text-gray-800">เวลาเปิด-ปิด</p>
+                          <p className="font-medium">เวลาเปิด-ปิด</p>
                           <p className="text-gray-700 text-sm">
                             {restaurant.openTime || '-'} - {restaurant.closeTime || '-'} น.
                           </p>
