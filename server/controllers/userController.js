@@ -25,24 +25,28 @@ const SECRET = process.env.JWT_SECRET || 'finddine_secret';
 
 exports.register = async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
+  console.log('[userController.register] Data received:', req.body);
+
   try {
     const exist = await User.findByEmail(email);
     if (exist) return res.status(400).json({ success: false, message: 'อีเมลนี้ถูกใช้แล้ว' });
 
     const hash = await bcrypt.hash(password, 10);
-    const user = await User.create({ firstName, lastName, email, password: hash });
+    const user = await User.create({
+      firstName,
+      lastName,
+      email,
+      password: hash,
+    });
 
+    console.log('[userController.register] Created user:', user);
     res.status(201).json({ success: true, user });
   } catch (err) {
-    let msg = 'เกิดข้อผิดพลาดในการสมัครสมาชิก';
-    if (err && err.message) {
-      msg = err.message;
-    } else if (typeof err === 'string') {
-      msg = err;
-    }
-    res.status(500).json({ success: false, message: msg });
+    console.error('[userController.register] Error:', err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;

@@ -73,19 +73,19 @@ app.get("/", (req, res) => {
 });
 
 // ===== User Registration =====
-app.post("/api/users/register", async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await prisma.user.create({
-      data: { firstName, lastName, email, password: hashedPassword },
-    });
-    res.status(201).json({ id: newUser.id, email: newUser.email });
-  } catch (error) {
-    console.error("Error creating user:", error);
-    res.status(400).json({ error: "Failed to create user" });
-  }
-});
+// app.post("/api/users/register", async (req, res) => {
+//   const { firstName, lastName, email, password } = req.body;
+//   try {
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     const newUser = await prisma.user.create({
+//       data: { firstName, lastName, email, password: hashedPassword },
+//     });
+//     res.status(201).json({ id: newUser.id, email: newUser.email });
+//   } catch (error) {
+//     console.error("Error creating user:", error);
+//     res.status(400).json({ error: "Failed to create user" });
+//   }
+// });
 
 // ===== User Login =====
 app.post("/api/users/login", async (req, res) => {

@@ -39,16 +39,6 @@ model restaurant {
   @@map("restaurant")
 }
 
-model user {
-  id        Int      @id @default(autoincrement())
-  firstName String
-  lastName  String
-  email     String   @unique(map: "User_email_key")
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime
-}
-
 model booking {
   id              Int        @id @default(autoincrement())
   restaurantId    Int
@@ -59,9 +49,9 @@ model booking {
   customerPhone   String     @db.VarChar(30)
   customerEmail   String?    @db.VarChar(100)
   specialRequests String?    @db.Text
-  status          String     @default("pending")
   createdAt       DateTime?  @default(now()) @db.DateTime(0)
   updatedAt       DateTime?  @default(now()) @db.DateTime(0)
+  status          String     @default("pending")
   restaurant      restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_booking_restaurant")
 
   @@index([restaurantId], map: "fk_booking_restaurant")
@@ -83,3 +73,14 @@ model bookingsetting {
   updatedAt      DateTime?   @default(now()) @db.DateTime(0)
   restaurant     restaurant? @relation(fields: [restaurantId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_restaurant_booking")
 }
+
+model User {
+  id        Int      @id @default(autoincrement())
+  firstName String
+  lastName  String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
