@@ -309,8 +309,40 @@ const RestaurantDetail = (props) => {
   const [email, setEmail] = useState("");
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
-  // ดึงรีวิวเมื่อเปิดแท็บ reviews
+  //ดึงค่าเฉลี่ยรีวิวหลังจากโหลดข้อมูลร้านเสร็จ
+  useEffect(() => {
+    if (!restaurant || !restaurantId) return;
+    axios
+      .get(`http://localhost:3001/api/reviews/${restaurantId}/summary`)
+      .then((res) => {
+        setRestaurant((prev) => ({
+          ...prev,
+          rating: res.data.average,
+          reviewCount: res.data.count,
+        }));
+      })
+      .catch((err) => console.error("Error fetching review summary:", err));
+  }, [restaurantId, restaurant]);
+
+  //อัปเดตเฉลี่ยใหม่เมื่อมีการเพิ่มรีวิว
+  useEffect(() => {
+    if (reviews.length > 0) {
+      axios.get(`http://localhost:3001/api/reviews/${restaurantId}/summary`)
+        .then(res => {
+          setRestaurant(prev => ({
+            ...prev,
+            rating: res.data.average,
+            reviewCount: res.data.count
+          }));
+        })
+        .catch(err => console.error("Error fetching review summary:", err));
+    }
+  }, [reviews]);
+
+  //ดึงรีวิวเมื่อเปิดแท็บ reviews
   useEffect(() => {
     if (activeTab === "reviews") {
       axios
@@ -324,6 +356,7 @@ const RestaurantDetail = (props) => {
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     try {
+      setSubmitting(true);
       const res = await axios.post("http://localhost:3001/api/reviews", {
         restaurantId,
         name,
@@ -331,6 +364,7 @@ const RestaurantDetail = (props) => {
         rating,
         comment,
       });
+      setSubmitting(false);
       // อัปเดตหน้าทันที (Realtime)
       setReviews((prev) => [res.data, ...prev]);
       setName("");
@@ -342,7 +376,6 @@ const RestaurantDetail = (props) => {
       console.error("Error submitting review:", err);
     }
   };
-
 
   if (!restaurantId) {
     return (
@@ -615,9 +648,10 @@ const RestaurantDetail = (props) => {
                         />
                         <button
                           type="submit"
-                          className="bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700"
+                          disabled={submitting}
+                          className={`bg-orange-600 text-white py-2 px-4 rounded-lg ${submitting ? "opacity-50 cursor-not-allowed" : "hover:bg-orange-700"}`}
                         >
-                          ส่งรีวิว
+                          {submitting ? "กำลังส่ง..." : "ส่งรีวิว"}
                         </button>
                       </form>
                     )}
@@ -625,27 +659,45 @@ const RestaurantDetail = (props) => {
                       {reviews.length === 0 ? (
                         <p className="text-gray-500 text-center">ยังไม่มีรีวิว</p>
                       ) : (
-                        reviews.map((r) => (
-                          <div key={r.id} className="bg-white p-4 rounded-lg shadow-sm">
-                            <div className="flex items-center justify-between mb-2">
-                              <div>
-                                <h4 className="font-semibold">{r.name}</h4>
-                                {r.email && <p className="text-sm text-gray-500">{r.email}</p>}
-                                <p className="text-sm text-gray-500">{new Date(r.createdAt).toLocaleDateString()}</p>
+                        <>
+                          {(showAllReviews ? reviews : reviews.slice(0, 2)).map((r) => (
+                            <div key={r.id} className="bg-white p-4 rounded-lg shadow-sm">
+                              <div className="flex items-center justify-between mb-2">
+                                <div>
+                                  <h4 className="font-semibold">{r.name}</h4>
+                                  {r.email && <p className="text-sm text-gray-500">{r.email}</p>}
+                                  <p className="text-sm text-gray-500">
+                                    {new Date(r.createdAt).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div className="flex space-x-1">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-4 h-4 ${i < r.rating
+                                          ? "fill-yellow-400 text-yellow-400"
+                                          : "text-gray-300"
+                                        }`}
+                                    />
+                                  ))}
+                                </div>
                               </div>
-                              <div className="flex space-x-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`w-4 h-4 ${i < r.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-                                      }`}
-                                  />
-                                ))}
-                              </div>
+                              <p className="text-gray-700">{r.comment}</p>
                             </div>
-                            <p className="text-gray-700">{r.comment}</p>
-                          </div>
-                        ))
+                          ))}
+
+                          {/* ปุ่มแสดง/ซ่อนรีวิวเพิ่มเติม */}
+                          {reviews.length > 2 && (
+                            <div className="text-center mt-4">
+                              <button
+                                onClick={() => setShowAllReviews(!showAllReviews)}
+                                className="text-orange-600 font-medium hover:underline"
+                              >
+                                {showAllReviews ? "ซ่อนรีวิว" : "ดูรีวิวทั้งหมด"}
+                              </button>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

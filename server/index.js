@@ -341,6 +341,17 @@ app.post("/api/reviews", async (req, res) => {
   }
 });
 
+app.get("/api/reviews/:restaurantId/summary", async (req, res) => {
+  try {
+    const restaurantId = parseInt(req.params.restaurantId);
+    const reviews = await prisma.review.findMany({ where: { restaurantId } });
+    const count = reviews.length;
+    const avg = count > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / count : 0;
+    res.json({ average: avg.toFixed(1), count });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to calculate summary" });
+  }
+});
 
 
 // ===== Search Restaurants =====
