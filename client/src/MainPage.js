@@ -231,16 +231,16 @@ export default function MainPage() {
     const hasHalfStar = rating % 1 !== 0;
 
     for (let i = 0; i < fullStars; i++) {
-      stars.push(<Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />);
+      stars.push(<Star key={i} className="w-2 h-2 fill-yellow-400 text-yellow-400" />);
     }
 
     if (hasHalfStar) {
-      stars.push(<Star key="half" className="w-4 h-4 fill-yellow-400 text-yellow-400 opacity-50" />);
+      stars.push(<Star key="half" className="w-2 h-2 fill-yellow-400 text-yellow-400 opacity-50" />);
     }
 
     const remainingStars = 5 - Math.ceil(rating);
     for (let i = 0; i < remainingStars; i++) {
-      stars.push(<Star key={`empty-${i}`} className="w-4 h-4 text-gray-300" />);
+      stars.push(<Star key={`empty-${i}`} className="w-2 h-2 text-gray-300" />);
     }
 
     return stars;
@@ -532,7 +532,7 @@ export default function MainPage() {
                   {restaurant.rating > 0 && (
                     <div className="flex items-center space-x-1">
                       {renderStars(restaurant.rating)}
-                      <span className="font-medium">{restaurant.rating}</span>
+                      <span className="text-sm">{restaurant.rating}</span>
                     </div>
                   )}
                 </div>
