@@ -305,6 +305,42 @@ app.put("/api/restaurants/:id/toggle-booking", async (req, res) => {
   }
 });
 
+// ===== Reviews =====
+
+// ✅ ดึงรีวิวของร้าน
+app.get("/api/reviews/:restaurantId", async (req, res) => {
+  try {
+    const reviews = await prisma.review.findMany({
+      where: { restaurantId: parseInt(req.params.restaurantId) },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(reviews);
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    res.status(500).json({ error: "Failed to fetch reviews" });
+  }
+});
+
+// ✅ เพิ่มรีวิวใหม่
+app.post("/api/reviews", async (req, res) => {
+  try {
+    const { restaurantId, name, email, rating, comment } = req.body;
+    const newReview = await prisma.review.create({
+      data: {
+        restaurantId: parseInt(restaurantId),
+        name,
+        email: email && email.trim() !== "" ? email.trim() : null,
+        rating: parseFloat(rating),
+        comment,
+      },
+    });
+    res.json(newReview);
+  } catch (error) {
+    console.error("Error adding review:", error);
+    res.status(500).json({ error: "Failed to add review" });
+  }
+});
+
 
 
 // ===== Search Restaurants =====

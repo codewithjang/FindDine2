@@ -116,15 +116,6 @@ export default function Navbar() {
                 className="h-8 w-auto"
               />
             </a>
-            {/* รีวิว */}
-            <Link
-              to="/reviews"
-              className="hidden md:flex flex items-center space-x-1 text-white hover:text-orange-200 font-medium transition-colors"
-            >
-              <Star className="h-5 w-5" />
-              <span>รีวิว</span>
-            </Link>
-
             {/* แผนที่ */}
             <Link
               to="/AllRestaurantsMap"

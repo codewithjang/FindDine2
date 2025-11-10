@@ -303,6 +303,47 @@ const RestaurantDetail = (props) => {
     }
   };
 
+  const [reviews, setReviews] = useState([]);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+
+  // ดึงรีวิวเมื่อเปิดแท็บ reviews
+  useEffect(() => {
+    if (activeTab === "reviews") {
+      axios
+        .get(`http://localhost:3001/api/reviews/${restaurantId}`)
+        .then((res) => setReviews(res.data))
+        .catch((err) => console.error("Error fetching reviews:", err));
+    }
+  }, [activeTab, restaurantId]);
+
+  // ฟังก์ชันส่งรีวิว
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axios.post("http://localhost:3001/api/reviews", {
+        restaurantId,
+        name,
+        email,
+        rating,
+        comment,
+      });
+      // อัปเดตหน้าทันที (Realtime)
+      setReviews((prev) => [res.data, ...prev]);
+      setName("");
+      setEmail("");
+      setRating(0);
+      setComment("");
+      setShowReviewForm(false);
+    } catch (err) {
+      console.error("Error submitting review:", err);
+    }
+  };
+
+
   if (!restaurantId) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-400">
@@ -522,28 +563,90 @@ const RestaurantDetail = (props) => {
                 )}
 
                 {activeTab === 'reviews' && (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">รีวิวจากลูกค้า</h3>
-                    <div className="space-y-4">
-                      {restaurant.reviews && restaurant.reviews.map && restaurant.reviews.map((review, idx) => (
-                        <div key={review.id || idx} className="border-b pb-4">
-                          <div className="flex items-start space-x-3">
-                            <img
-                              src={review.avatar}
-                              alt={review.userName}
-                              className="w-10 h-10 rounded-full"
+                  <div className="space-y-8">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold">รีวิวจากลูกค้า</h3>
+                      <button
+                        onClick={() => setShowReviewForm(!showReviewForm)}
+                        className="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 transition"
+                      >
+                        เขียนรีวิว
+                      </button>
+                    </div>
+
+                    {/* ฟอร์มเพิ่มรีวิว */}
+                    {showReviewForm && (
+                      <form
+                        onSubmit={handleSubmitReview}
+                        className="bg-gray-50 p-6 rounded-lg shadow-sm"
+                      >
+                        <div className="flex space-x-2 mb-4">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              onClick={() => setRating(star)}
+                              className={`w-6 h-6 cursor-pointer ${star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                }`}
                             />
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <h4 className="font-medium">{review.userName}</h4>
-                                <div className="flex">{renderStars(review.rating)}</div>
-                                <span className="text-gray-500 text-sm">{review.date}</span>
-                              </div>
-                              <p className="text-gray-700">{review.comment}</p>
-                            </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
+                        <input
+                          type="text"
+                          placeholder="ชื่อ"
+                          className="w-full mb-3 p-2 border rounded"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          required
+                        />
+                        <input
+                          type="email"
+                          placeholder="อีเมล (ไม่บังคับ)"
+                          className="w-full mb-3 p-2 border rounded"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                        <textarea
+                          placeholder="เขียนรีวิว..."
+                          className="w-full mb-3 p-2 border rounded"
+                          rows="3"
+                          value={comment}
+                          onChange={(e) => setComment(e.target.value)}
+                          required
+                        />
+                        <button
+                          type="submit"
+                          className="bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700"
+                        >
+                          ส่งรีวิว
+                        </button>
+                      </form>
+                    )}
+                    <div className="space-y-4">
+                      {reviews.length === 0 ? (
+                        <p className="text-gray-500 text-center">ยังไม่มีรีวิว</p>
+                      ) : (
+                        reviews.map((r) => (
+                          <div key={r.id} className="bg-white p-4 rounded-lg shadow-sm">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <h4 className="font-semibold">{r.name}</h4>
+                                {r.email && <p className="text-sm text-gray-500">{r.email}</p>}
+                                <p className="text-sm text-gray-500">{new Date(r.createdAt).toLocaleDateString()}</p>
+                              </div>
+                              <div className="flex space-x-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`w-4 h-4 ${i < r.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+                                      }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-gray-700">{r.comment}</p>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
