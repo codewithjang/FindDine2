@@ -87,6 +87,46 @@ app.get("/", (req, res) => {
 //   }
 // });
 
+// ===== User Registration =====
+app.post("/api/users/register", async (req, res) => {
+  const { firstName, lastName, email, password } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await prisma.user.create({
+      data: { firstName, lastName, email, password: hashedPassword },
+    });
+    res.status(201).json({ id: newUser.id, email: newUser.email });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res.status(400).json({ error: "Failed to create user" });
+  }
+});
+
+// ===== Get All Users (Admin) =====
+app.get("/api/users", async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, firstName: true, lastName: true, email: true, createdAt: true }
+    });
+    res.json(users);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
+// ===== Delete User (Admin) =====
+app.delete("/api/users/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.user.delete({ where: { id: parseInt(id) } });
+    res.json({ success: true, message: "User deleted" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
 // ===== User Login =====
 app.post("/api/users/login", async (req, res) => {
   const { email, password } = req.body;
@@ -197,78 +237,90 @@ app.post("/api/restaurants/register", upload.array("photos", 10), async (req, re
 });
 
 // ===== Restaurant List =====
-// app.get("/api/restaurants", async (req, res) => {
-//   const { filter } = req.query;
-//   const parseJSON = (v) => {
-//     if (!v) return [];
-//     try {
-//       return JSON.parse(v);
-//     } catch {
-//       return [];
-//     }
-//   };
+app.get("/api/restaurants", async (req, res) => {
+  const { filter } = req.query;
+  const parseJSON = (v) => {
+    if (!v) return [];
+    try {
+      return JSON.parse(v);
+    } catch {
+      return [];
+    }
+  };
 
-//   try {
-//     const whereClause = {};
-//     if (filter) {
-//       const contains = (val) => ({ contains: `"${val}"` });
-//       switch (filter) {
-//         case "halal":
-//           whereClause.lifestyles = contains("halal");
-//           break;
-//         case "reservation":
-//           whereClause.serviceOptions = contains("accept_reservation");
-//           break;
-//         case "in_city":
-//           whereClause.locationStyles = contains("in_city");
-//           break;
-//         case "sea_view":
-//           whereClause.locationStyles = contains("sea_view");
-//           break;
-//         case "natural":
-//           whereClause.locationStyles = contains("natural_style");
-//           break;
-//       }
-//     }
+  try {
+    const whereClause = {};
+    if (filter) {
+      const contains = (val) => ({ contains: `"${val}"` });
+      switch (filter) {
+        case "halal":
+          whereClause.lifestyles = contains("halal");
+          break;
+        case "reservation":
+          whereClause.serviceOptions = contains("accept_reservation");
+          break;
+        case "in_city":
+          whereClause.locationStyles = contains("in_city");
+          break;
+        case "sea_view":
+          whereClause.locationStyles = contains("sea_view");
+          break;
+        case "natural":
+          whereClause.locationStyles = contains("natural_style");
+          break;
+      }
+    }
 
-//     // ✅ ดึงร้าน + รีวิวเฉลี่ยและจำนวน
-//     const restaurants = await prisma.restaurant.findMany({
-//       where: whereClause,
-//       orderBy: { id: "asc" },
-//       include: {
-//         review: {
-//           select: { rating: true },
-//         },
-//       },
-//     });
+    // ✅ ดึงร้าน + รีวิวเฉลี่ยและจำนวน
+    const restaurants = await prisma.restaurant.findMany({
+      where: whereClause,
+      orderBy: { id: "asc" },
+      include: {
+        review: {
+          select: { rating: true },
+        },
+      },
+    });
 
-//     // ✅ คำนวณค่าเฉลี่ยและจำนวนรีวิว
-//     const results = restaurants.map((r) => {
-//       const ratings = r.review.map((rev) => rev.rating);
-//       const avg =
-//         ratings.length > 0
-//           ? ratings.reduce((sum, val) => sum + val, 0) / ratings.length
-//           : 0;
+    // ✅ คำนวณค่าเฉลี่ยและจำนวนรีวิว
+    const results = restaurants.map((r) => {
+      const ratings = r.review.map((rev) => rev.rating);
+      const avg =
+        ratings.length > 0
+          ? ratings.reduce((sum, val) => sum + val, 0) / ratings.length
+          : 0;
 
-//       return {
-//         ...r,
-//         rating: Number(avg.toFixed(1)),
-//         reviewCount: ratings.length,
-//         facilities: parseJSON(r.facilities),
-//         paymentOptions: parseJSON(r.paymentOptions),
-//         serviceOptions: parseJSON(r.serviceOptions),
-//         locationStyles: parseJSON(r.locationStyles),
-//         lifestyles: parseJSON(r.lifestyles),
-//         photos: parseJSON(r.photos),
-//       };
-//     });
+      return {
+        ...r,
+        rating: Number(avg.toFixed(1)),
+        reviewCount: ratings.length,
+        facilities: parseJSON(r.facilities),
+        paymentOptions: parseJSON(r.paymentOptions),
+        serviceOptions: parseJSON(r.serviceOptions),
+        locationStyles: parseJSON(r.locationStyles),
+        lifestyles: parseJSON(r.lifestyles),
+        photos: parseJSON(r.photos),
+      };
+    });
 
-//     res.json(results);
-//   } catch (error) {
-//     console.error("Error fetching restaurants:", error);
-//     res.status(500).json({ error: "Failed to fetch restaurants" });
-//   }
-// });
+    res.json(results);
+  } catch (error) {
+    console.error("Error fetching restaurants:", error);
+    res.status(500).json({ error: "Failed to fetch restaurants" });
+  }
+});
+
+// ===== Delete Restaurant (Admin) =====
+app.delete("/api/restaurants/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.restaurant.delete({ where: { id: parseInt(id) } });
+    res.json({ success: true, message: "Restaurant deleted" });
+  } catch (error) {
+    console.error("Error deleting restaurant:", error);
+    res.status(500).json({ error: "Failed to delete restaurant" });
+  }
+});
 
 // ===== Get Restaurant by ID =====
 app.get("/api/restaurants/:id", async (req, res) => {
@@ -371,6 +423,58 @@ app.get("/api/reviews/:restaurantId/summary", async (req, res) => {
 });
 
 
+// ===== Get All Bookings (Admin) =====
+app.get("/api/bookings", async (req, res) => {
+  try {
+    const bookings = await prisma.booking.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { restaurant: { select: { restaurantName: true } } }
+    });
+    res.json(bookings);
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+    res.status(500).json({ error: "Failed to fetch bookings" });
+  }
+});
+
+// ===== Delete Booking (Admin) =====
+app.delete("/api/bookings/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.booking.delete({ where: { id: parseInt(id) } });
+    res.json({ success: true, message: "Booking deleted" });
+  } catch (error) {
+    console.error("Error deleting booking:", error);
+    res.status(500).json({ error: "Failed to delete booking" });
+  }
+});
+
+// ===== Get All Reviews (Admin) =====
+app.get("/api/reviews", async (req, res) => {
+  try {
+    const reviews = await prisma.review.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { restaurant: { select: { restaurantName: true } } }
+    });
+    res.json(reviews);
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    res.status(500).json({ error: "Failed to fetch reviews" });
+  }
+});
+
+// ===== Delete Review (Admin) =====
+app.delete("/api/reviews/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.review.delete({ where: { id: parseInt(id) } });
+    res.json({ success: true, message: "Review deleted" });
+  } catch (error) {
+    console.error("Error deleting review:", error);
+    res.status(500).json({ error: "Failed to delete review" });
+  }
+});
+
 // ===== Search Restaurants =====
 app.get("/api/restaurants/search/:query", async (req, res) => {
   const { query } = req.params;
@@ -388,6 +492,40 @@ app.get("/api/restaurants/search/:query", async (req, res) => {
   } catch (error) {
     console.error("Error searching restaurants:", error);
     res.status(500).json({ error: "Failed to search restaurants" });
+  }
+});
+
+// ===== Admin Login =====
+app.post("/api/admin/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const admin = await prisma.admin.findUnique({ where: { email } });
+    if (!admin) {
+      return res.status(401).json({ success: false, message: "Admin not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Invalid password" });
+    }
+
+    // สร้าง token
+    const token = `admin-token-${admin.id}-${Date.now()}`;
+
+    return res.json({
+      success: true,
+      token,
+      admin: {
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
+        role: "admin"
+      }
+    });
+  } catch (error) {
+    console.error("Admin Login Error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
