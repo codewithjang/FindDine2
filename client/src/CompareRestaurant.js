@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Star,
     Clock,
@@ -6,12 +6,68 @@ import {
     Phone,
     X,
     Check,
+    ChevronLeft,
+    ChevronRight,
 } from 'lucide-react';
 import bg from './assets/bg/bgCompare.png';
+import RestaurantMap from './component/RestaurantMap';
 
 const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemoveFromCompare }) => {
+    const [currentImageIndex, setCurrentImageIndex] = useState({});
+    const [userLocation, setUserLocation] = useState(null);
+    
     // เลือกร้านจาก allRestaurants ที่ตรงกับ compareRestaurants
     const restaurants = allRestaurants.filter(r => compareRestaurants.includes(r.id));
+
+    // ดึงตำแหน่งผู้ใช้จาก Geolocation API
+    React.useEffect(() => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setUserLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                },
+                (error) => {
+                    console.log("ไม่สามารถเข้าถึงตำแหน่งผู้ใช้:", error);
+                }
+            );
+        }
+    }, []);
+
+    // ฟังก์ชันคำนวณระยะทางโดยใช้สูตร Haversine
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371; // รัศมีของโลก (กิโลเมตร)
+        const dLat = (lat2 - lat1) * (Math.PI / 180);
+        const dLon = (lon2 - lon1) * (Math.PI / 180);
+        
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c; // ระยะทางเป็นกิโลเมตร
+        
+        return distance.toFixed(2);
+    };
+
+    // ฟังก์ชันดึงระยะทางของร้านอาหาร
+    const getRestaurantDistance = (restaurant) => {
+        if (!userLocation || !restaurant.latitude || !restaurant.longitude) {
+            return "-";
+        }
+        
+        const distance = calculateDistance(
+            userLocation.lat,
+            userLocation.lng,
+            Number(restaurant.latitude),
+            Number(restaurant.longitude)
+        );
+        
+        return `${distance} km`;
+    };
 
     const renderStars = (rating) => {
         return [...Array(5)].map((_, i) => (
@@ -47,6 +103,81 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
         }
     };
 
+    const nextImage = (restaurantId) => {
+        const restaurant = restaurants.find(r => r.id === restaurantId);
+        if (!restaurant || !restaurant.photos || restaurant.photos.length === 0) return;
+        
+        const current = currentImageIndex[restaurantId] || 0;
+        setCurrentImageIndex({
+            ...currentImageIndex,
+            [restaurantId]: current === restaurant.photos.length - 1 ? 0 : current + 1
+        });
+    };
+
+    const prevImage = (restaurantId) => {
+        const restaurant = restaurants.find(r => r.id === restaurantId);
+        if (!restaurant || !restaurant.photos || restaurant.photos.length === 0) return;
+        
+        const current = currentImageIndex[restaurantId] || 0;
+        setCurrentImageIndex({
+            ...currentImageIndex,
+            [restaurantId]: current === 0 ? restaurant.photos.length - 1 : current - 1
+        });
+    };
+
+    // ฟังก์ชันปลด JSON ซ้อน
+    const toArray = (val) => {
+        if (val == null) return [];
+        let cur = val;
+
+        if (Array.isArray(cur)) return cur;
+
+        for (let i = 0; i < 2; i++) {
+            if (Array.isArray(cur)) return cur;
+            if (typeof cur === "string") {
+                try {
+                    const parsed = JSON.parse(cur);
+                    cur = parsed;
+                    continue;
+                } catch {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        if (typeof cur === "string") {
+            const trimmed = cur.trim();
+            const stripped = trimmed.replace(/^\[|\]$/g, "").replace(/"/g, "");
+            if (stripped.includes(",")) {
+                return stripped.split(",").map((s) => s.trim()).filter(Boolean);
+            }
+            return trimmed ? [trimmed] : [];
+        }
+
+        return Array.isArray(cur) ? cur : cur ? [cur] : [];
+    };
+
+    // Normalize รูปภาพ
+    const normalizePhotos = (val) => {
+        const arr = toArray(val);
+        return arr
+            .map((item) => {
+                if (typeof item === "string") {
+                    return { url: item, isPrimary: false };
+                }
+                if (item && typeof item === "object") {
+                    return {
+                        url: item.url || item.photoUrl || "",
+                        isPrimary: !!item.isPrimary,
+                    };
+                }
+                return null;
+            })
+            .filter((p) => p && p.url);
+    };
+
     if (!compareRestaurants || compareRestaurants.length === 0) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -64,7 +195,7 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-orange-50">
             {/* Header */}
             <div className="w-full relative flex flex-col h-[120px] sm:h-[200px] md:h-[240px]">
                 <img
@@ -103,7 +234,60 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
                             </thead>
 
                             <tbody className="divide-y divide-gray-100">
-                                {/* FoodType */}
+                                {/* Restaurant Photos */}
+                                <tr>
+                                    <td className="p-4 font-medium text-gray-700 bg-gray-50">รูปภาพ</td>
+                                    {restaurants.map((restaurant) => {
+                                        const photos = normalizePhotos(restaurant.photos);
+                                        const currentIdx = currentImageIndex[restaurant.id] || 0;
+                                        const currentPhoto = photos?.[currentIdx];
+                                        
+                                        return (
+                                            <td key={restaurant.id} className="p-4 text-center">
+                                                {photos && photos.length > 0 ? (
+                                                    <div className="relative h-48 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center group">
+                                                        <img
+                                                            src={currentPhoto?.url || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400"}
+                                                            alt={restaurant.restaurantName}
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                        {/* Navigation Arrows */}
+                                                        {photos.length > 1 && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => prevImage(restaurant.id)}
+                                                                    className="absolute left-2 top-1/2 -translate-y-1/2 p-1 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 opacity-0 group-hover:opacity-100 transition"
+                                                                >
+                                                                    <ChevronLeft className="w-4 h-4" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => nextImage(restaurant.id)}
+                                                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 opacity-0 group-hover:opacity-100 transition"
+                                                                >
+                                                                    <ChevronRight className="w-4 h-4" />
+                                                                </button>
+                                                                {/* Image Indicators */}
+                                                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-1">
+                                                                    {photos.map((_, idx) => (
+                                                                        <button
+                                                                            key={idx}
+                                                                            onClick={() => setCurrentImageIndex({ ...currentImageIndex, [restaurant.id]: idx })}
+                                                                            className={`w-2 h-2 rounded-full ${idx === currentIdx ? 'bg-white' : 'bg-white bg-opacity-50'}`}
+                                                                        />
+                                                                    ))}
+                                                                </div>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="h-48 rounded-lg bg-gray-100 flex items-center justify-center">
+                                                        <span className="text-gray-400">ไม่มีรูปภาพ</span>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        );
+                                    })}
+                                </tr>
                                 <tr>
                                     <td className="p-4 font-medium text-gray-700 bg-gray-50">ประเภทอาหาร</td>
                                     {restaurants.map((restaurant) => (
@@ -147,13 +331,13 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
                                     <td className="p-4 font-medium text-gray-700 bg-gray-50">เวลาเปิด - ปิด</td>
                                     {restaurants.map((restaurant) => (
                                         <td key={restaurant.id} className="p-4 text-center">
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${restaurant.isOpen
+                                            {/* <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${restaurant.isOpen
                                                 ? 'bg-green-100 text-green-800'
                                                 : 'bg-red-100 text-red-800'
                                                 }`}>
                                                 <Clock className="w-3 h-3 mr-1" />
                                                 {restaurant.isOpen ? 'เปิดอยู่' : 'ปิดแล้ว'}
-                                            </span>
+                                            </span> */}
                                             <p className="text-sm text-gray-500 mt-1">
                                                 {restaurant.openTime ?? "-"} - {restaurant.closeTime ?? "-"} น.
                                             </p>
@@ -168,8 +352,15 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
                                         <td key={restaurant.id} className="p-4 text-center">
                                             <div className="flex items-center justify-center space-x-1">
                                                 <MapPin className="w-4 h-4 text-gray-500" />
-                                                <span className="font-medium">{restaurant.distance ?? "-"}</span>
+                                                <span className="font-medium">
+                                                    {getRestaurantDistance(restaurant)}
+                                                </span>
                                             </div>
+                                            {!userLocation && (
+                                                <p className="text-xs text-gray-400 mt-1">
+                                                    (กำหนดตำแหน่ง)
+                                                </p>
+                                            )}
                                         </td>
                                     ))}
                                 </tr>
@@ -304,6 +495,28 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
                                             <p className="text-sm text-gray-600 text-center">
                                                 {restaurant.address ?? "-"}
                                             </p>
+                                        </td>
+                                    ))}
+                                </tr>
+
+                                {/* Map */}
+                                <tr>
+                                    <td className="p-4 font-medium text-gray-700 bg-gray-50">แผนที่</td>
+                                    {restaurants.map((restaurant) => (
+                                        <td key={restaurant.id} className="p-4">
+                                            {restaurant.latitude && restaurant.longitude ? (
+                                                <div className="rounded-lg overflow-hidden h-64">
+                                                    <RestaurantMap
+                                                        latitude={Number(restaurant.latitude)}
+                                                        longitude={Number(restaurant.longitude)}
+                                                        name={restaurant.restaurantName}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="h-64 rounded-lg bg-gray-100 flex items-center justify-center">
+                                                    <span className="text-gray-400">ไม่มีข้อมูลตำแหน่ง</span>
+                                                </div>
+                                            )}
                                         </td>
                                     ))}
                                 </tr>
