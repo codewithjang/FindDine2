@@ -97,3 +97,11 @@ model user {
   createdAt DateTime @default(now())
   updatedAt DateTime
 }
+
+model admin {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique(map: "email") @db.VarChar(255)
+  password  String    @db.VarChar(255)
+  name      String?   @db.VarChar(255)
+  createdAt DateTime? @default(now()) @db.DateTime(0)
+}
