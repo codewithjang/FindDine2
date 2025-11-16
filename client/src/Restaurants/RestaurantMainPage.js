@@ -214,6 +214,7 @@ export default function RestaurantDashboard() {
     };
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [activeTab2, setActiveTab2] = useState('overview');
+    const [reviews, setReviews] = useState([]);
 
     // ดึงข้อมูลร้านอาหารจาก backend ทุกครั้งที่ component mount
     const [restaurant, setRestaurant] = useState(null);
@@ -336,6 +337,15 @@ export default function RestaurantDashboard() {
             });
     }, []);
 
+    useEffect(() => {
+        if (!restaurantId) return;
+
+        axios.get(`http://localhost:3001/api/reviews/${restaurantId}`)
+            .then(res => setReviews(res.data))
+            .catch(err => console.error("Error loading reviews:", err));
+    }, [restaurantId]);
+
+
     const renderStars = (rating) => {
         return [...Array(5)].map((_, i) => (
             <Star
@@ -402,10 +412,7 @@ export default function RestaurantDashboard() {
         { id: 3, customer: 'คุณจอห์น', time: '18:00', guests: 6, status: 'confirmed' }
     ];
 
-    const recentReviews = [
-        { id: 1, customer: 'คุณสุชาติ', rating: 5, comment: 'อาหารอร่อยมาก บรรยากاศดี วิวทะเลสวย', time: '2 ชม. ที่แล้ว' },
-        { id: 2, customer: 'Ms. Sarah', rating: 4, comment: 'Great halal food with amazing sea view!', time: '5 ชม. ที่แล้ว' }
-    ];
+    const recentReviews = reviews.slice(0, 5);
 
     // ตรวจสอบว่าร้านเปิดรับการจองหรือไม่
     const hasReservation =
@@ -535,20 +542,26 @@ export default function RestaurantDashboard() {
                                 </div>
                                 <div className="p-6">
                                     <div className="space-y-4">
-                                        {recentReviews.map((review) => (
-                                            <div key={review.id} className="py-3 border-b border-gray-100 last:border-0">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <p className="font-medium text-gray-900">{review.customer}</p>
-                                                    <div className="flex items-center space-x-1">
-                                                        {[...Array(review.rating)].map((_, i) => (
-                                                            <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                                                        ))}
+                                        {recentReviews.length === 0 ? (
+                                            <p className="text-gray-500 text-center">ยังไม่มีรีวิว</p>
+                                        ) : (
+                                            recentReviews.map((review) => (
+                                                <div key={review.id} className="py-3 border-b border-gray-100 last:border-0">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <p className="font-medium text-gray-900">{review.name}</p>
+                                                        <div className="flex items-center space-x-1">
+                                                            {[...Array(review.rating)].map((_, i) => (
+                                                                <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                                                            ))}
+                                                        </div>
                                                     </div>
+                                                    <p className="text-sm text-gray-600 mb-1">{review.comment}</p>
+                                                    <p className="text-xs text-gray-400">
+                                                        {new Date(review.createdAt).toLocaleDateString("th-TH")}
+                                                    </p>
                                                 </div>
-                                                <p className="text-sm text-gray-600 mb-1">{review.comment}</p>
-                                                <p className="text-xs text-gray-400">{review.time}</p>
-                                            </div>
-                                        ))}
+                                            ))
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -797,6 +810,40 @@ export default function RestaurantDashboard() {
                     </div>
                 )}
 
+                {activeTab === 'reviews' && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">รีวิวลูกค้า</h3>
+
+                        {reviews.length === 0 ? (
+                            <p className="text-gray-500 text-center">ยังไม่มีรีวิว</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {reviews.map((review) => (
+                                    <div key={review.id} className="p-4 border rounded-lg shadow-sm">
+                                        <div className="flex items-center justify-between mb-1">
+                                            <p className="font-medium text-gray-900">{review.name}</p>
+                                            <div className="flex space-x-1">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Star
+                                                        key={i}
+                                                        className={`w-4 h-4 ${i < review.rating
+                                                                ? "text-yellow-400 fill-yellow-400"
+                                                                : "text-gray-300"
+                                                            }`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <p className="text-gray-700">{review.comment}</p>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            {new Date(review.createdAt).toLocaleDateString("th-TH")}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {activeTab === 'profile' && (
                     <>
