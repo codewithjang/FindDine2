@@ -24,6 +24,8 @@ import RestaurantMap from './component/RestaurantMap';
 import UserProfile from './User/UserProfile';
 import AllRestaurantsMap from './component/AllRestaurantsMap';
 import BookingSettings from './Restaurants/BookingSettings';
+import AdminLogin from './admin/AdminLogin';
+import AdminDashboard from './admin/AdminDashboard';
 
 function Layout() {
   const location = useLocation();
@@ -125,6 +127,8 @@ function Layout() {
         <Route path="/AllRestaurantsMap" element={<AllRestaurantsMap />} />
         <Route path="/RestaurantForEdit/:id" element={<RestaurantForEdit />} />
         <Route path="/RestaurantForBookingSettings/:id" element={<BookingSettings />} /> 
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
     </>
   );
