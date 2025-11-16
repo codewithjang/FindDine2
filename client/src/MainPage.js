@@ -23,18 +23,77 @@ export default function MainPage() {
   const [restaurants, setRestaurants] = useState([]);
   // ดึงข้อมูลร้านอาหารจาก backend
   useEffect(() => {
-    axios.get('http://localhost:3001/api/restaurants')
+    const params = new URLSearchParams(window.location.search);
+    const restaurantId = params.get("restaurantId");
+    const q = params.get("search");
+
+    const normalize = (arr) => arr.map(r => ({
+      ...r,
+      photos: Array.isArray(r.photos) ? r.photos : (r.photos ? (() => { try { return JSON.parse(r.photos); } catch { return []; } })() : []),
+      lifestyles: Array.isArray(r.lifestyles) ? r.lifestyles : (r.lifestyles ? (() => { try { return JSON.parse(r.lifestyles); } catch { return []; } })() : []),
+      locationStyles: Array.isArray(r.locationStyles) ? r.locationStyles : (r.locationStyles ? (() => { try { return JSON.parse(r.locationStyles); } catch { return []; } })() : []),
+      serviceOptions: Array.isArray(r.serviceOptions) ? r.serviceOptions : (r.serviceOptions ? (() => { try { return JSON.parse(r.serviceOptions); } catch { return []; } })() : []),
+      facilities: Array.isArray(r.facilities) ? r.facilities : (r.facilities ? (() => { try { return JSON.parse(r.facilities); } catch { return []; } })() : []),
+      paymentOptions: Array.isArray(r.paymentOptions) ? r.paymentOptions : (r.paymentOptions ? (() => { try { return JSON.parse(r.paymentOptions); } catch { return []; } })() : []),
+    }));
+
+    // ------------------------------
+    // 🟧 1) โหลดร้านเดียวด้วย restaurantId
+    // ------------------------------
+    if (restaurantId) {
+      axios.get(`http://localhost:3001/api/restaurants/${restaurantId}`)
+        .then(res => {
+          const data = normalize([res.data]);
+          setOriginalRestaurants(data);
+          setRestaurants(data);
+        })
+        .catch(() => {
+          setOriginalRestaurants([]);
+          setRestaurants([]);
+        });
+      return;
+    }
+
+    // ------------------------------
+    // 🟦 2) โหลดแบบ search query (ค้นหลายร้าน)
+    // ------------------------------
+    if (q) {
+      const stored = localStorage.getItem("searchResults");
+
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          const data = normalize(parsed);
+          setOriginalRestaurants(data);
+          setRestaurants(data);
+        } catch {
+          setOriginalRestaurants([]);
+          setRestaurants([]);
+        }
+
+        localStorage.removeItem("searchResults");
+        localStorage.removeItem("searchQuery");
+      } else {
+        axios.get(`http://localhost:3001/api/restaurants?search=${encodeURIComponent(q)}`)
+          .then(res => {
+            const data = normalize(res.data);
+            setOriginalRestaurants(data);
+            setRestaurants(data);
+          })
+          .catch(() => {
+            setOriginalRestaurants([]);
+            setRestaurants([]);
+          });
+      }
+      return;
+    }
+
+    // ------------------------------
+    // 🟩 3) โหลดร้านทั้งหมด (หน้า main page ปกติ)
+    // ------------------------------
+    axios.get("http://localhost:3001/api/restaurants")
       .then(res => {
-        // Normalize array fields
-        const data = res.data.map(r => ({
-          ...r,
-          photos: Array.isArray(r.photos) ? r.photos : (r.photos ? JSON.parse(r.photos) : []),
-          lifestyles: Array.isArray(r.lifestyles) ? r.lifestyles : (r.lifestyles ? JSON.parse(r.lifestyles) : []),
-          locationStyles: Array.isArray(r.locationStyles) ? r.locationStyles : (r.locationStyles ? JSON.parse(r.locationStyles) : []),
-          serviceOptions: Array.isArray(r.serviceOptions) ? r.serviceOptions : (r.serviceOptions ? JSON.parse(r.serviceOptions) : []),
-          facilities: Array.isArray(r.facilities) ? r.facilities : (r.facilities ? JSON.parse(r.facilities) : []),
-          paymentOptions: Array.isArray(r.paymentOptions) ? r.paymentOptions : (r.paymentOptions ? JSON.parse(r.paymentOptions) : []),
-        }));
+        const data = normalize(res.data);
         setOriginalRestaurants(data);
         setRestaurants(data);
       })
@@ -42,7 +101,9 @@ export default function MainPage() {
         setOriginalRestaurants([]);
         setRestaurants([]);
       });
+
   }, []);
+
   const [activeFilters, setActiveFilters] = useState([]);
   const [compareList, setCompareList] = useState([]);
   const [currentView, setCurrentView] = useState('main'); // 'main', 'detail', 'compare'
@@ -52,6 +113,24 @@ export default function MainPage() {
   const [selectedPayments, setSelectedPayments] = useState([]);
   const [distance, setDistance] = useState(1000); // ค่า default 1 กม.
   const [selectedRestaurantId, setSelectedRestaurantId] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+
+  // ดึงตำแหน่งผู้ใช้
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.log("ไม่สามารถเข้าถึงตำแหน่งผู้ใช้:", error);
+        }
+      );
+    }
+  }, []);
 
   const filters = [
     { id: 'halal', label: 'ฮาลาล', icon: MoonStar },
@@ -62,6 +141,24 @@ export default function MainPage() {
     { id: 'natural', label: 'ธรรมชาติ', icon: Trees },
     { id: 'more', label: 'เพิ่มเติม', icon: Plus }
   ];
+
+  // ฟังก์ชันคำนวณระยะทางโดยใช้สูตร Haversine
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // รัศมีของโลก (กิโลเมตร)
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distanceInKm = R * c;
+    const distanceInMeters = distanceInKm * 1000;
+
+    return distanceInMeters; // ส่งกลับเป็นเมตร
+  };
 
   const handleFilterClick = (filterId) => {
     if (filterId === "more") {
@@ -123,22 +220,28 @@ export default function MainPage() {
     const filtered = restaurants.filter((restaurant) => {
       let match = true;
 
-      // ระยะทาง
-      if (distance && restaurant.distance > distance) match = false;
+      // ระยะทาง - คำนวณจากตำแหน่งผู้ใช้จริง
+      if (userLocation && restaurant.latitude && restaurant.longitude && distance) {
+        const calculatedDistance = calculateDistance(
+          userLocation.lat,
+          userLocation.lng,
+          Number(restaurant.latitude),
+          Number(restaurant.longitude)
+        );
+        if (calculatedDistance > distance) match = false;
+      }
 
       // ประเภทอาหาร
       if (selectedFoodTypes.length > 0) {
-        match =
-          match &&
-          restaurant.foodTypes.some((f) => selectedFoodTypes.includes(f.foodType));
+        match = match && selectedFoodTypes.includes(restaurant.foodType);
       }
 
       // สิ่งอำนวยความสะดวก
       if (selectedFacilities.length > 0) {
         match =
           match &&
-          restaurant.facilities.some((f) =>
-            selectedFacilities.includes(f.facilityType)
+          selectedFacilities.some((facility) =>
+            Array.isArray(restaurant.facilities) && restaurant.facilities.includes(facility)
           );
       }
 
@@ -146,8 +249,8 @@ export default function MainPage() {
       if (selectedPayments.length > 0) {
         match =
           match &&
-          restaurant.paymentOptions.some((p) =>
-            selectedPayments.includes(p.paymentType)
+          selectedPayments.some((payment) =>
+            Array.isArray(restaurant.paymentOptions) && restaurant.paymentOptions.includes(payment)
           );
       }
 
@@ -163,7 +266,7 @@ export default function MainPage() {
     { value: "thai", label: "อาหารไทย" },
     { value: "bbq", label: "บาร์บีคิว / ปิ้งย่าง" },
     { value: "seafood", label: "อาหารทะเล" },
-    { value: "cafe", label: "ร้านกาแฟ" },
+    { value: "cafe", label: "ร้านน้ำและกาแฟ" },
     { value: "dessert", label: "ของหวาน / เบเกอรี่" },
     { value: "chinese", label: "อาหารจีน" },
     { value: "japanese", label: "อาหารญี่ปุ่น" },
@@ -224,6 +327,38 @@ export default function MainPage() {
       />
     );
   }
+
+  // ฟังก์ชันเช็คเปิดปิดจริง
+  const isRestaurantOpen = (openTime, closeTime) => {
+    if (!openTime || !closeTime) return null;
+
+    try {
+      // แยก HH:mm จากเวลา
+      const [openHour, openMinute] = openTime.split(':').map(Number);
+      const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+
+      // เวลาปัจจุบัน
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+      // เวลาเปิด-ปิดเป็นนาที
+      const openTimeInMinutes = openHour * 60 + openMinute;
+      const closeTimeInMinutes = closeHour * 60 + closeMinute;
+
+      // ถ้าเวลาปิดน้อยกว่าเวลาเปิด = ปิดเที่ยงคืน (เช่น 23:00 - 06:00)
+      if (closeTimeInMinutes < openTimeInMinutes) {
+        return currentTimeInMinutes >= openTimeInMinutes || currentTimeInMinutes < closeTimeInMinutes;
+      }
+
+      // เวลาเปิดปกติ (เช่น 10:00 - 21:00)
+      return currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes < closeTimeInMinutes;
+    } catch (error) {
+      console.error("Error parsing time:", error);
+      return null;
+    }
+  };
 
   const renderStars = (rating) => {
     const stars = [];
@@ -320,18 +455,28 @@ export default function MainPage() {
 
               {/* เนื้อหาที่เลื่อนได้ */}
               <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                {/* ข้อความแจ้ง */}
+                {!userLocation && (
+                  <div className="p-3 bg-yellow-100 border border-yellow-400 rounded-lg text-yellow-800 text-sm">
+                    <p>⚠️ กรุณาอนุญาตให้เข้าถึงตำแหน่งของคุณเพื่อให้คำนวณระยะทางได้อย่างถูกต้อง</p>
+                  </div>
+                )}
+
                 {/* ระยะทาง */}
                 <div>
-                  <label className="block font-semibold mb-2">ระยะทาง</label>
+                  <label className="block font-semibold mb-2">
+                    ระยะทาง {userLocation && <span className="text-xs text-gray-500 font-normal">(จากตำแหน่งของคุณ)</span>}
+                  </label>
                   <div className="flex gap-3">
                     {/* ปุ่ม "ใกล้ฉัน" */}
                     <button
                       type="button"
-                      onClick={() => setDistance(500)} // สมมติว่า "ใกล้ฉัน" = ไม่เกิน 500 เมตร
+                      onClick={() => setDistance(500)} // ไม่เกิน 500 เมตร
                       className={`flex-1 px-4 py-2 rounded-lg border font-medium transition ${distance === 500
                         ? "bg-orange-500 text-white border-orange-500"
                         : "bg-white text-gray-700 border-gray-300 hover:border-orange-400"
                         }`}
+                      disabled={!userLocation}
                     >
                       ใกล้ฉัน
                     </button>
@@ -341,6 +486,7 @@ export default function MainPage() {
                       value={distance}
                       onChange={(e) => setDistance(Number(e.target.value))}
                       className="flex-1 border rounded-lg px-3 py-2"
+                      disabled={!userLocation}
                     >
                       <option value={500}>ไม่เกิน 500 เมตร</option>
                       <option value={1000}>ไม่เกิน 1 กิโลเมตร</option>
@@ -504,13 +650,18 @@ export default function MainPage() {
                 />
                 {/* Status Badge */}
                 <div className="absolute top-3 left-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${restaurant.isOpen
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-red-100 text-red-800'
-                    }`}>
-                    <Clock className="w-3 h-3 inline mr-1" />
-                    {restaurant.isOpen ? 'เปิดอยู่' : 'ปิดแล้ว'}
-                  </span>
+                  {(() => {
+                    const isOpen = isRestaurantOpen(restaurant.openTime, restaurant.closeTime);
+                    return (
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${isOpen
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                        }`}>
+                        <Clock className="w-3 h-3" />
+                        {isOpen ? 'เปิดอยู่' : 'ปิดแล้ว'}
+                      </span>
+                    );
+                  })()}
                 </div>
                 {/* Special Tags */}
                 <div className="absolute top-3 right-3 flex flex-col space-y-1">

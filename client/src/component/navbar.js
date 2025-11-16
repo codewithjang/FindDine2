@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import { Search, CircleUserRound, Menu, X } from 'lucide-react';
 import { Star, MapPin } from 'lucide-react';
@@ -53,22 +53,92 @@ export default function Navbar() {
   };
 
   const handleSearch = async (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      try {
-        const res = await fetch(`http://localhost:3001/api/restaurants?search=${encodeURIComponent(searchQuery)}`);
-        if (!res.ok) throw new Error('Search failed');
-        const data = await res.json();
-        localStorage.setItem('searchResults', JSON.stringify(data));
-        window.location.href = `/main_page?search=${encodeURIComponent(searchQuery)}`;
-      } catch (err) {
-        alert('เกิดข้อผิดพลาดในการค้นหา');
-      }
+    e && e.preventDefault && e.preventDefault();
+    if (!searchQuery || !searchQuery.trim()) return;
+    await performSearch(searchQuery.trim());
+  };
+
+  // Performs the search for a given query string, stores results and redirects
+  const performSearch = async (query) => {
+    if (!query || !query.trim()) return;
+    try {
+      const res = await fetch(`http://localhost:3001/api/restaurants?search=${encodeURIComponent(query)}`);
+      if (!res.ok) throw new Error('Search failed');
+      const data = await res.json();
+
+      // store results so MainPage can read them immediately
+      localStorage.setItem('searchResults', JSON.stringify(data));
+      localStorage.setItem('searchQuery', query);
+
+      // redirect to main page with the query (MainPage will consume stored results)
+      window.location.href = `/main_page?search=${encodeURIComponent(query)}`;
+    } catch (err) {
+      console.error('Search error:', err);
+      alert('เกิดข้อผิดพลาดในการค้นหา');
     }
   };
 
   // Autocomplete: fetch suggestions as user types
-  const handleInputChange = async (e) => {
+  const debounceRef = useRef(null);
+
+  // highlight matched substring in suggestion (case-insensitive)
+  const highlightMatch = (text, query) => {
+    if (!query) return text;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return text;
+    const before = text.slice(0, idx);
+    const match = text.slice(idx, idx + query.length);
+    const after = text.slice(idx + query.length);
+    return (
+      <>
+        {before}
+        <span className="bg-yellow-100 text-yellow-800 px-0.5 rounded">{match}</span>
+        {after}
+      </>
+    );
+  };
+
+  // Move exact name matches (case-insensitive) to the front of the suggestion list
+  // จัดลำดับผลลัพธ์ โดยให้ชื่อที่ใกล้เคียงกับคำค้นมากที่สุดอยู่บนสุด
+  const prioritizeExactMatch = (items, query) => {
+    if (!query) return items;
+
+    const q = query.toLowerCase().trim();
+
+    const getScore = (it) => {
+      const name = (it.restaurantName || it.name || '').toString().toLowerCase().trim();
+      if (!name) return 0;
+
+      // 3 = ตรงทั้งประโยคเป๊ะ ๆ
+      if (name === q) return 3;
+
+      // 2 = ขึ้นต้นเหมือนกัน หรือ user พิมพ์เป็น prefix ของชื่อร้าน
+      if (name.startsWith(q) || q.startsWith(name)) return 2;
+
+      // 1 = มีคำค้นอยู่ในชื่อร้าน (contains)
+      if (name.includes(q)) return 1;
+
+      // 0 = ไม่ค่อยใกล้
+      return 0;
+    };
+
+    // sort จาก score มาก → น้อย
+    return [...items].sort((a, b) => {
+      const scoreB = getScore(b);
+      const scoreA = getScore(a);
+
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
+      }
+
+      // ถ้า score เท่ากัน ให้ชื่อสั้นกว่าขึ้นก่อน (มักจะใกล้กับสิ่งที่พิมพ์มากกว่า)
+      const nameA = (a.restaurantName || a.name || '').toString().length;
+      const nameB = (b.restaurantName || b.name || '').toString().length;
+      return nameA - nameB;
+    });
+  };
+
+  const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
     if (value.trim().length === 0) {
@@ -76,23 +146,41 @@ export default function Navbar() {
       setShowSuggestions(false);
       return;
     }
-    try {
-      const res = await fetch(`http://localhost:3001/api/restaurants?search=${encodeURIComponent(value)}`);
-      if (!res.ok) throw new Error('Suggest failed');
-      const data = await res.json();
-      // Show only top 5 suggestions by name
-      setSuggestions(data.slice(0, 5));
-      setShowSuggestions(true);
-    } catch {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`http://localhost:3001/api/restaurants?search=${encodeURIComponent(value)}`);
+        if (!res.ok) throw new Error('Suggest failed');
+        const data = await res.json();
+        const prioritized = prioritizeExactMatch(data, value);
+        setSuggestions(prioritized.slice(0, 7));
+        setShowSuggestions(data.length > 0);
+      } catch (err) {
+        console.error('Autocomplete error:', err);
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300);
   };
 
-  const handleSuggestionClick = (name) => {
-    setSearchQuery(name);
-    setSuggestions([]);
-    setShowSuggestions(false);
+  // cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const handleSuggestionClick = (item) => {
+    const restaurantId = item.id;
+
+    // เก็บผลลัพธ์ร้านเดียวใน localStorage
+    localStorage.setItem(
+      'searchResults',
+      JSON.stringify([item])
+    );
+
+    window.location.href = `/main_page?restaurantId=${restaurantId}`;
   };
 
   return (
@@ -144,15 +232,22 @@ export default function Navbar() {
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                 {showSuggestions && suggestions.length > 0 && (
                   <ul className="absolute left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-56 overflow-y-auto">
-                    {suggestions.map((item, idx) => (
-                      <li
-                        key={item.id || idx}
-                        className="px-4 py-2 cursor-pointer hover:bg-orange-100 text-gray-800"
-                        onMouseDown={() => handleSuggestionClick(item.restaurantName || item.name || '')}
-                      >
-                        {item.restaurantName || item.name}
-                      </li>
-                    ))}
+                    {suggestions.map((item, idx) => {
+                      const restaurantName = item.restaurantName || item.name || '';
+                      const isExact = restaurantName.toLowerCase().trim() === searchQuery.toLowerCase().trim();
+
+                      return (
+                        <li
+                          key={item.id || idx}
+                          className={`px-4 py-2 cursor-pointer 
+                          hover:bg-orange-100 text-gray-800 
+                          ${isExact ? 'bg-orange-50 font-semibold' : ''}`}
+                          onMouseDown={() => handleSuggestionClick(item)}
+                        >
+                          {highlightMatch(restaurantName, searchQuery)}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </div>
@@ -249,17 +344,39 @@ export default function Navbar() {
                     type="text"
                     placeholder="ค้นหาร้านอาหาร..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={handleInputChange}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    autoComplete="off"
                   />
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                  {/* Mobile Suggestions */}
+                  {showSuggestions && suggestions.length > 0 && (
+                    <ul className="absolute left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-56 overflow-y-auto">
+                      {suggestions.map((item, idx) => {
+                        const restaurantName = item.restaurantName || item.name || '';
+                        const isExact = restaurantName.toLowerCase().trim() === searchQuery.toLowerCase().trim();
+
+                        return (
+                          <li
+                            key={item.id || idx}
+                            className={`px-4 py-2 cursor-pointer 
+                            hover:bg-orange-100 text-gray-800 
+                            ${isExact ? 'bg-orange-50 font-semibold' : ''}`}
+                            onMouseDown={() => handleSuggestionClick(item)}
+                          >
+                            {highlightMatch(restaurantName, searchQuery)}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </div>
               </div>
 
-              <a href="/reviews" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-orange-500">
+              {/* <a href="/reviews" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-orange-500">
                 รีวิว
-              </a>
+              </a> */}
               <a href="/AllRestaurantsMap" className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-orange-500">
                 แผนที่
               </a>
