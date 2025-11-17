@@ -91,14 +91,24 @@ app.get("/", (req, res) => {
 app.post("/api/users/register", async (req, res) => {
   const { firstName, lastName, email, password } = req.body;
   try {
+    // check if email already exists
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'อีเมลนี้ถูกใช้แล้ว' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = await prisma.user.create({
       data: { firstName, lastName, email, password: hashedPassword },
     });
-    res.status(201).json({ id: newUser.id, email: newUser.email });
+    res.status(201).json({ success: true, id: newUser.id, email: newUser.email });
   } catch (error) {
     console.error("Error creating user:", error);
-    res.status(400).json({ error: "Failed to create user" });
+    // handle unique constraint error from Prisma
+    if (error && error.code === 'P2002') {
+      return res.status(400).json({ success: false, message: 'อีเมลนี้ถูกใช้แล้ว' });
+    }
+    res.status(500).json({ success: false, error: error.message || 'Failed to create user' });
   }
 });
 
