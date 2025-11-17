@@ -142,12 +142,18 @@ exports.update = async (req, res) => {
     let data = req.body;
     const files = req.files || [];
 
+    // โหลดข้อมูลร้านปัจจุบันจากฐานข้อมูลเพื่อใช้เป็นค่าเริ่มต้นสำหรับรูปถ้า client ไม่ได้ส่ง
+    const existingRestaurant = await Restaurant.findById(id);
+    const existingPhotosFromDb = existingRestaurant ? parseArrayField(existingRestaurant.photos) : [];
+
     // ลบคีย์ที่ไม่จำเป็น
     const invalidKeys = [
       'id', 'createdAt', 'updatedAt',
       'foodTypeLabel', 'facilitiesLabel',
       'paymentOptionsLabel', 'serviceOptionsLabel',
-      'locationStylesLabel', 'lifestylesLabel'
+      'locationStylesLabel', 'lifestylesLabel',
+      // remove calculated or related fields that should not be passed to Prisma
+      'review', 'rating', 'reviewCount'
     ];
     invalidKeys.forEach(k => delete data[k]);
 
@@ -156,24 +162,30 @@ exports.update = async (req, res) => {
     if (data.latitude) data.latitude = parseFloat(data.latitude);
     if (data.longitude) data.longitude = parseFloat(data.longitude);
 
-    // ✅ แปลง fields จาก JSON string -> array (ถ้ามี)
+    // ===== รูปภาพ: หาก client ส่งฟิลด์ 'photos' ให้ใช้ค่านั้น (แม้จะเป็น [])
+    // ===== หาก client ไม่ได้ส่ง 'photos' แต่มีไฟล์อัปโหลดใหม่ ให้เอา existing photos จาก DB แล้วต่อด้วยรูปใหม่
+    // ===== หากไม่มีทั้งสองอย่าง อย่าแก้ไขฟิลด์ photos เลย (เพื่อไม่ให้ลบรูปโดยไม่ตั้งใจ)
     const parseArray = (v) => {
       if (!v) return [];
       try { return JSON.parse(v); } catch { return []; }
     };
 
-    // ✅ โหลดรูปเดิมจาก body (หากยังเหลือ)
-    const oldPhotos = parseArray(data.photos);
+    const hasPhotosFieldInRequest = Object.prototype.hasOwnProperty.call(data, 'photos');
+    const oldPhotos = hasPhotosFieldInRequest ? parseArray(data.photos) : existingPhotosFromDb;
 
-    // ✅ เพิ่มรูปใหม่ที่อัปโหลดเข้ามา
+    // เพิ่มรูปใหม่ที่อัปโหลดเข้ามา
     const newPhotos = files.map((f, i) => ({
       url: `${req.protocol}://${req.get('host')}/uploads/${f.filename}`,
       isPrimary: oldPhotos.length === 0 && i === 0
     }));
 
-    // ✅ รวมรูปทั้งหมดเข้าด้วยกัน
-    const mergedPhotos = [...oldPhotos, ...newPhotos];
-    data.photos = JSON.stringify(mergedPhotos);
+    if (hasPhotosFieldInRequest || newPhotos.length > 0) {
+      const mergedPhotos = [...oldPhotos, ...newPhotos];
+      data.photos = JSON.stringify(mergedPhotos);
+    } else {
+      // ถ้าไม่มีการเปลี่ยนแปลงรูป ให้ลบคีย์ออกจาก data เพื่อไม่ให้ไปเขียนทับใน DB
+      delete data.photos;
+    }
 
     // ✅ stringify fields อื่น ๆ ที่เป็น array
     const jsonFields = ['facilities', 'paymentOptions', 'serviceOptions', 'locationStyles', 'lifestyles'];
@@ -190,9 +202,6 @@ exports.update = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
-
-
 
 
 exports.delete = async (req, res) => {

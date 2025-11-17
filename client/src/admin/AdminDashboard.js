@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Eye, Plus, Search, Filter, AlertCircle } from "lucide-react";
 import bg from '../assets/bg/admin_banner.png';
+import AdminAddRestaurantForm from './AdminAddRestaurantForm';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -298,85 +299,7 @@ const ViewBookings = () => {
 
 // ===== Add Restaurant =====
 const AddRestaurant = () => {
-    const [formData, setFormData] = useState({
-        restaurantName: "",
-        foodType: "",
-        email: "",
-        password: "",
-        address: "",
-        phone: "",
-        latitude: "",
-        longitude: "",
-        priceRange: "",
-        startingPrice: "",
-        description: "",
-        openTime: "",
-        closeTime: ""
-    });
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
-    const [error, setError] = useState("");
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setMessage("");
-        setError("");
-
-        try {
-            const res = await axios.post("http://localhost:3001/api/restaurants/register", formData);
-            setMessage("เพิ่มร้านอาหารสำเร็จ!");
-            setFormData({
-                restaurantName: "",
-                foodType: "",
-                email: "",
-                password: "",
-                address: "",
-                phone: "",
-                latitude: "",
-                longitude: "",
-                priceRange: "",
-                startingPrice: "",
-                description: "",
-                openTime: "",
-                closeTime: ""
-            });
-        } catch (err) {
-            setError(err.response?.data?.message || "เกิดข้อผิดพลาด");
-        }
-        setLoading(false);
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow max-w-2xl">
-            {message && <div className="mb-4 p-4 bg-green-100 text-green-800 rounded">{message}</div>}
-            {error && <div className="mb-4 p-4 bg-red-100 text-red-800 rounded">{error}</div>}
-
-            <div className="grid grid-cols-2 gap-4">
-                <input name="restaurantName" placeholder="ชื่อร้านอาหาร" value={formData.restaurantName} onChange={handleChange} required className="col-span-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input name="foodType" placeholder="ประเภทอาหาร" value={formData.foodType} onChange={handleChange} required className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input name="email" type="email" placeholder="อีเมล" value={formData.email} onChange={handleChange} required className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input name="password" type="password" placeholder="รหัสผ่าน" value={formData.password} onChange={handleChange} required className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input name="phone" placeholder="เบอร์โทร" value={formData.phone} onChange={handleChange} required className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input name="address" placeholder="ที่อยู่" value={formData.address} onChange={handleChange} required className="col-span-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input name="latitude" type="number" placeholder="ละติจูด" value={formData.latitude} onChange={handleChange} className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" step="0.00001" />
-                <input name="longitude" type="number" placeholder="ลองจิจูด" value={formData.longitude} onChange={handleChange} className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" step="0.00001" />
-                <input name="openTime" type="time" placeholder="เวลาเปิด" value={formData.openTime} onChange={handleChange} className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input name="closeTime" type="time" placeholder="เวลาปิด" value={formData.closeTime} onChange={handleChange} className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input name="priceRange" placeholder="ช่วงราคา (เช่น 100-500)" value={formData.priceRange} onChange={handleChange} className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <input name="startingPrice" type="number" placeholder="ราคาเริ่มต้น" value={formData.startingPrice} onChange={handleChange} className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" />
-                <textarea name="description" placeholder="คำอธิบาย" value={formData.description} onChange={handleChange} className="col-span-2 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500" rows="3" />
-            </div>
-
-            <button type="submit" disabled={loading} className="mt-6 w-full bg-orange-600 text-white py-2 rounded-lg hover:bg-orange-700 transition disabled:opacity-50">
-                {loading ? "กำลังเพิ่ม..." : "เพิ่มร้านอาหาร"}
-            </button>
-        </form>
-    );
+    return <AdminAddRestaurantForm />;
 };
 
 // ===== Manage Restaurants =====
@@ -418,11 +341,10 @@ const ManageRestaurants = () => {
     };
 
     // ตรวจสอบว่า admin เป็นคนเพิ่มร้านนี้หรือไม่
-    // สมมุติเก็บ adminId ใน createdByAdminId หรือ adminEmail
+    // เฉพาะแอดมินที่เพิ่มร้านเอง เท่านั้นที่สามารถแก้ไขได้
     const canEditRestaurant = (restaurant) => {
-        // สำหรับตอนนี้: admin ที่มี email ตรงกับ email ของร้านสามารถแก้ไขได้
-        // หรือถ้าร้านมีฟิลด์ createdByAdminId ให้ใช้นั้น
-        return restaurant.createdByAdminId === admin?.id || restaurant.adminEmail === admin?.email;
+        // ร้านต้องมี createdByAdminId และต้องตรงกับ admin ปัจจุบัน
+        return restaurant.createdByAdminId === String(admin?.id);
     };
 
     const startEdit = (restaurant) => {
@@ -431,11 +353,16 @@ const ManageRestaurants = () => {
             setTimeout(() => setEditError(""), 3000);
             return;
         }
+
+        // 🔥 ลบ photos ออก ไม่ต้องให้ไปอยู่ใน editFormData
+        const { photos, ...cleanRestaurant } = restaurant;
+
         setEditingId(restaurant.id);
-        setEditFormData({ ...restaurant });
+        setEditFormData(cleanRestaurant);
         setEditError("");
         setEditSuccess("");
     };
+
 
     const cancelEdit = () => {
         setEditingId(null);
@@ -450,8 +377,15 @@ const ManageRestaurants = () => {
 
     const saveEdit = async () => {
         if (!editFormData) return;
+
+        // 🔥 ลบ photos ออกจาก data ก่อนส่ง PUT
+        const dataToSend = { ...editFormData };
+        delete dataToSend.photos;
         try {
-            await axios.put(`http://localhost:3001/api/restaurants/${editFormData.id}`, editFormData);
+            await axios.put(
+                `http://localhost:3001/api/restaurants/${editFormData.id}`,
+                dataToSend
+            );
             setRestaurants(restaurants.map(r => r.id === editFormData.id ? editFormData : r));
             setEditSuccess("แก้ไขข้อมูลสำเร็จ!");
             setTimeout(() => {
@@ -502,109 +436,148 @@ const ManageRestaurants = () => {
                 <p className="text-center text-gray-500">กำลังโหลด...</p>
             ) : (
                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                    {filtered.map(restaurant => (
-                        <div key={restaurant.id} className="bg-white p-4 rounded-lg shadow hover:shadow-lg transition">
+                    {filtered.map((restaurant) => (
+                        <div
+                            key={restaurant.id}
+                            className="bg-[#FFF7ED] border border-orange-100 rounded-2xl p-5 shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-200"
+                        >
                             {editingId === restaurant.id ? (
-                                // ฟอร์มแก้ไข
+                                // ===== ฟอร์มแก้ไข =====
                                 <div className="space-y-3">
-                                    <h3 className="font-semibold text-lg">แก้ไขข้อมูลร้าน</h3>
+                                    <h3 className="text-lg font-semibold text-orange-600">แก้ไขข้อมูลร้าน</h3>
+
                                     <input
                                         type="text"
                                         name="restaurantName"
                                         placeholder="ชื่อร้าน"
                                         value={editFormData?.restaurantName || ""}
                                         onChange={handleEditChange}
-                                        className="w-full px-2 py-1 border rounded text-sm"
+                                        className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
                                     />
+
                                     <input
                                         type="text"
                                         name="foodType"
                                         placeholder="ประเภทอาหาร"
                                         value={editFormData?.foodType || ""}
                                         onChange={handleEditChange}
-                                        className="w-full px-2 py-1 border rounded text-sm"
+                                        className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
                                     />
+
                                     <input
                                         type="text"
                                         name="phone"
                                         placeholder="เบอร์โทร"
                                         value={editFormData?.phone || ""}
                                         onChange={handleEditChange}
-                                        className="w-full px-2 py-1 border rounded text-sm"
+                                        className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
                                     />
+
                                     <input
                                         type="text"
                                         name="address"
                                         placeholder="ที่อยู่"
                                         value={editFormData?.address || ""}
                                         onChange={handleEditChange}
-                                        className="w-full px-2 py-1 border rounded text-sm"
+                                        className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
                                     />
-                                    <input
-                                        type="time"
-                                        name="openTime"
-                                        value={editFormData?.openTime || ""}
-                                        onChange={handleEditChange}
-                                        className="w-full px-2 py-1 border rounded text-sm"
-                                    />
-                                    <input
-                                        type="time"
-                                        name="closeTime"
-                                        value={editFormData?.closeTime || ""}
-                                        onChange={handleEditChange}
-                                        className="w-full px-2 py-1 border rounded text-sm"
-                                    />
+
+                                    <div className="flex gap-3">
+                                        <input
+                                            type="time"
+                                            name="openTime"
+                                            value={editFormData?.openTime || ""}
+                                            onChange={handleEditChange}
+                                            className="w-1/2 px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
+                                        />
+                                        <input
+                                            type="time"
+                                            name="closeTime"
+                                            value={editFormData?.closeTime || ""}
+                                            onChange={handleEditChange}
+                                            className="w-1/2 px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
+                                        />
+                                    </div>
+
                                     <textarea
                                         name="description"
                                         placeholder="คำอธิบาย"
                                         value={editFormData?.description || ""}
                                         onChange={handleEditChange}
-                                        className="w-full px-2 py-1 border rounded text-sm"
                                         rows="2"
+                                        className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
                                     />
-                                    <div className="flex gap-2 mt-3">
+
+                                    {/* ปุ่ม */}
+                                    <div className="flex gap-3 pt-2">
                                         <button
                                             onClick={saveEdit}
-                                            className="flex-1 px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                                            className="flex-1 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition"
                                         >
                                             บันทึก
                                         </button>
                                         <button
                                             onClick={cancelEdit}
-                                            className="flex-1 px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
+                                            className="flex-1 bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500 transition"
                                         >
                                             ยกเลิก
                                         </button>
                                     </div>
                                 </div>
                             ) : (
-                                // การแสดงปกติ
-                                <>
-                                    <h3 className="font-semibold text-lg mb-2">{restaurant.restaurantName}</h3>
-                                    <p className="text-sm text-gray-600 mb-1">อีเมล: {restaurant.email}</p>
-                                    <p className="text-sm text-gray-600 mb-1">ประเภท: {restaurant.foodType}</p>
-                                    <p className="text-sm text-gray-600 mb-4">โทร: {restaurant.phone}</p>
-                                    <div className="flex gap-2">
+                                // ===== UI แสดงผลปกติ =====
+                                <div>
+                                    <div className="flex justify-between items-start">
+                                        <h3 className="text-lg font-bold text-gray-900">
+                                            {restaurant.restaurantName}
+                                        </h3>
+
+                                        <div className="text-xs px-2 py-1 bg-orange-200 text-orange-700 rounded-md">
+                                            {restaurant.foodType || "ไม่ระบุ"}
+                                        </div>
+                                    </div>
+
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        📧 {restaurant.email}
+                                    </p>
+
+                                    <p className="text-sm text-gray-600">📞 {restaurant.phone}</p>
+
+                                    <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                        {restaurant.address}
+                                    </p>
+
+                                    {/* Badge แทนจากรูปตัวอย่าง */}
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        <span className="text-xs bg-white border border-orange-200 px-2 py-1 rounded-full text-orange-700">
+                                            เปิด {restaurant.openTime} - {restaurant.closeTime}
+                                        </span>
+                                    </div>
+
+                                    {/* ปุ่ม */}
+                                    <div className="flex gap-2 mt-5">
                                         <button
                                             onClick={() => viewRestaurant(restaurant.id)}
-                                            className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition text-sm"
+                                            className="flex-1 py-2 rounded-lg bg-orange-100 text-orange-700 font-medium hover:bg-orange-200 transition shadow-sm"
                                         >
-                                            <Eye className="w-4 h-4" /> ดู
+                                            ดูข้อมูล
                                         </button>
+
                                         <button
                                             onClick={() => startEdit(restaurant)}
-                                            className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 transition text-sm"
+                                            className="flex-1 py-2 rounded-lg bg-orange-200 text-orange-800 font-medium hover:bg-orange-400 transition shadow-sm"
                                         >
-                                            <Edit2 className="w-4 h-4" /> แก้ไข
+                                            แก้ไข
                                         </button>
+
                                         <button
                                             onClick={() => deleteRestaurant(restaurant.id)}
-                                            className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-sm"
+                                            className="flex-1 py-2 rounded-lg bg-red-100 text-red-700 font-medium hover:bg-red-200 transition shadow-sm"
                                         >
-                                            <Trash2 className="w-4 h-4" /> ลบ
+                                            ลบ
                                         </button>
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
                     ))}

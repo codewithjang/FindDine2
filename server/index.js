@@ -193,6 +193,17 @@ app.post("/api/restaurants/register", upload.array("photos", 10), async (req, re
       closeTime
     } = req.body;
 
+    // ดึง admin ID จาก token header (ถ้ามี)
+    let createdByAdminId = null;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("admin-token-")) {
+      // Token format: "admin-token-{id}-{timestamp}"
+      const tokenParts = authHeader.split("-");
+      if (tokenParts.length >= 3) {
+        createdByAdminId = tokenParts[2];
+      }
+    }
+
     const existing = await prisma.restaurant.findUnique({ where: { email } });
     if (existing) return res.status(400).json({ message: "Email นี้ถูกใช้งานแล้ว" });
 
@@ -225,7 +236,8 @@ app.post("/api/restaurants/register", upload.array("photos", 10), async (req, re
         lifestyles: toJSONString(parseMaybeJSON(lifestyles)),
         photos: toJSONString(photoObjs),
         openTime,
-        closeTime
+        closeTime,
+        createdByAdminId
       },
     });
 
@@ -319,6 +331,118 @@ app.delete("/api/restaurants/:id", async (req, res) => {
   } catch (error) {
     console.error("Error deleting restaurant:", error);
     res.status(500).json({ error: "Failed to delete restaurant" });
+  }
+});
+
+// ===== Update Restaurant (Admin) =====
+// Accept photo uploads on edit as well
+app.put("/api/restaurants/:id", upload.array("photos", 10), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      restaurantName,
+      foodType,
+      phone,
+      address,
+      openTime,
+      closeTime,
+      description,
+      facilities,
+      paymentOptions,
+      serviceOptions,
+      locationStyles,
+      lifestyles
+    } = req.body;
+
+    // ตรวจสอบว่าร้านมี createdByAdminId และตรงกับ admin ปัจจุบัน
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("admin-token-")) {
+      return res.status(403).json({ message: "Unauthorized: Invalid or missing token" });
+    }
+
+    // ดึง admin ID จาก token
+    const tokenParts = authHeader.split("-");
+    const adminId = tokenParts.length >= 3 ? tokenParts[2] : null;
+    if (!adminId) {
+      return res.status(403).json({ message: "Invalid token format" });
+    }
+
+    // ดึงข้อมูลร้านจากฐานข้อมูล
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!restaurant) {
+      return res.status(404).json({ message: "Restaurant not found" });
+    }
+
+    // ตรวจสอบสิทธิ์: ต้องตรงกับ createdByAdminId
+    if (restaurant.createdByAdminId !== adminId) {
+      return res.status(403).json({ message: "You don't have permission to edit this restaurant" });
+    }
+
+    // Prepare photos: merge existing, body-provided and newly uploaded photos
+    const existingPhotos = parseMaybeJSON(restaurant.photos);
+    const files = req.files || [];
+    const uploadedPhotoObjs = files.map((f, i) => ({
+      url: `${req.protocol}://${req.get("host")}/uploads/${f.filename}`,
+      isPrimary: existingPhotos.length === 0 && i === 0,
+    }));
+
+    const bodyPhotosProvided = req.body.photos ? parseMaybeJSON(req.body.photos) : null;
+
+    let finalPhotos;
+    if (Array.isArray(bodyPhotosProvided) && bodyPhotosProvided.length > 0) {
+      // Client explicitly sent a photos array (e.g., to remove or reorder); merge new uploads
+      finalPhotos = [...bodyPhotosProvided, ...uploadedPhotoObjs];
+    } else if (uploadedPhotoObjs.length > 0) {
+      // No photos array from client, but there are new uploaded files -> append to existing
+      finalPhotos = [...existingPhotos, ...uploadedPhotoObjs];
+    } else {
+      // No change to photos
+      finalPhotos = undefined;
+    }
+
+    // Build update data only with fields that should change
+    const updateData = {
+      restaurantName: restaurantName || restaurant.restaurantName,
+      foodType: foodType || restaurant.foodType,
+      phone: phone || restaurant.phone,
+      address: address || restaurant.address,
+      openTime: openTime || restaurant.openTime,
+      closeTime: closeTime || restaurant.closeTime,
+      description: description || restaurant.description,
+      updatedAt: new Date(),
+    };
+
+    // Array fields: only set if present in request
+    if (typeof facilities !== "undefined") updateData.facilities = toJSONString(parseMaybeJSON(facilities));
+    if (typeof paymentOptions !== "undefined") updateData.paymentOptions = toJSONString(parseMaybeJSON(paymentOptions));
+    if (typeof serviceOptions !== "undefined") updateData.serviceOptions = toJSONString(parseMaybeJSON(serviceOptions));
+    if (typeof locationStyles !== "undefined") updateData.locationStyles = toJSONString(parseMaybeJSON(locationStyles));
+    if (typeof lifestyles !== "undefined") updateData.lifestyles = toJSONString(parseMaybeJSON(lifestyles));
+
+    if (req.body.photos !== undefined) {
+      // CASE: client ส่ง photos มา (รวมถึงกรณีลบ / reorder)
+      const safePhotos = Array.isArray(bodyPhotosProvided) ? bodyPhotosProvided : [];
+      updateData.photos = toJSONString([...safePhotos, ...uploadedPhotoObjs]);
+
+    } else if (uploadedPhotoObjs.length > 0) {
+      // CASE: ไม่มี photos จาก client แต่มีรูปใหม่อัปโหลด
+      updateData.photos = toJSONString([...existingPhotos, ...uploadedPhotoObjs]);
+
+    }
+
+    // อัปเดตข้อมูลร้าน
+    const updatedRestaurant = await prisma.restaurant.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+    });
+
+    res.json({ success: true, message: "Restaurant updated successfully", restaurant: updatedRestaurant });
+  } catch (error) {
+    console.error("Error updating restaurant:", error);
+    res.status(500).json({ error: "Failed to update restaurant", details: error.message });
   }
 });
 

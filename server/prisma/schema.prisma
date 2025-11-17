@@ -33,6 +33,7 @@ model restaurant {
   serviceOptions   String?         @db.LongText
   startingPrice    Int?
   bookingSettingId Int?
+  createdByAdminId String?         @db.VarChar(255)
   booking          booking[]
   bookingsetting   bookingsetting?
   review           review[]        @relation("RestaurantReviews")
