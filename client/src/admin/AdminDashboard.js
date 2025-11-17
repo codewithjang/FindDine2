@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Eye, Plus, Search, Filter, AlertCircle } from "lucide-react";
 import bg from '../assets/bg/admin_banner.png';
 import AdminAddRestaurantForm from './AdminAddRestaurantForm';
+import ViewBookings from './ViewBookings';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
@@ -205,97 +206,7 @@ const ManageUsers = () => {
     );
 };
 
-// ===== View Bookings =====
-const ViewBookings = () => {
-    const [bookings, setBookings] = useState([]);
-    const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all");
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchBookings();
-    }, []);
-
-    const fetchBookings = async () => {
-        try {
-            const res = await axios.get("http://localhost:3001/api/bookings");
-            setBookings(res.data || []);
-            setLoading(false);
-        } catch (err) {
-            console.error("Error fetching bookings:", err);
-            setLoading(false);
-        }
-    };
-
-    const filtered = bookings.filter(b => {
-        const matchSearch = b.customerName.toLowerCase().includes(search.toLowerCase()) ||
-            b.customerEmail?.toLowerCase().includes(search.toLowerCase());
-        const matchStatus = statusFilter === "all" || b.status === statusFilter;
-        return matchSearch && matchStatus;
-    });
-
-    return (
-        <div className="space-y-4">
-            <div className="flex gap-4 bg-white p-4 rounded-lg shadow">
-                <input
-                    type="text"
-                    placeholder="ค้นหาชื่อหรืออีเมล..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-                <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                    <option value="all">สถานะทั้งหมด</option>
-                    <option value="pending">รอดำเนินการ</option>
-                    <option value="confirmed">ยืนยันแล้ว</option>
-                    <option value="cancelled">ยกเลิก</option>
-                </select>
-            </div>
-
-            {loading ? (
-                <p className="text-center text-gray-500">กำลังโหลด...</p>
-            ) : (
-                <div className="bg-white rounded-lg shadow overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-sm font-semibold">ชื่อลูกค้า</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold">วันที่</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold">จำนวนแขก</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold">สถานะ</th>
-                                <th className="px-6 py-3 text-left text-sm font-semibold">เบอร์โทร</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {filtered.map(booking => (
-                                <tr key={booking.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4">{booking.customerName}</td>
-                                    <td className="px-6 py-4">{new Date(booking.date).toLocaleDateString("th-TH")}</td>
-                                    <td className="px-6 py-4">{booking.guests} คน</td>
-                                    <td className="px-6 py-4">
-                                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${booking.status === "confirmed" ? "bg-green-100 text-green-800" :
-                                            booking.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                                                "bg-red-100 text-red-800"
-                                            }`}>
-                                            {booking.status === "confirmed" ? "ยืนยันแล้ว" :
-                                                booking.status === "pending" ? "รอดำเนินการ" : "ยกเลิก"}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">{booking.customerPhone}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {filtered.length === 0 && <p className="p-6 text-center text-gray-500">ไม่พบการจอง</p>}
-                </div>
-            )}
-        </div>
-    );
-};
+// ViewBookings moved to its own component `ViewBookings.js`
 
 // ===== Add Restaurant =====
 const AddRestaurant = () => {
