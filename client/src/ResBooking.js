@@ -34,6 +34,44 @@ const RestaurantBooking = () => {
         specialRequests: "",
     });
 
+    // หากผู้ใช้ล็อกอิน ให้ดึงชื่อและอีเมลจาก localStorage มาเติมในฟอร์ม (ยังสามารถแก้ไขได้)
+    useEffect(() => {
+        try {
+            const possibleKeys = ['user', 'profile', 'currentUser'];
+            let stored = null;
+            for (const k of possibleKeys) {
+                const v = localStorage.getItem(k);
+                if (v) {
+                    try {
+                        stored = JSON.parse(v);
+                        break;
+                    } catch {
+                        // not JSON
+                    }
+                }
+            }
+
+            // also check a generic 'user' that might be just an id or token
+            if (!stored) {
+                const raw = localStorage.getItem('user');
+                if (raw) {
+                    try { stored = JSON.parse(raw); } catch { stored = null; }
+                }
+            }
+
+            if (stored && (stored.firstName || stored.email || stored.name)) {
+                const name = stored.firstName ? `${stored.firstName} ${stored.lastName || ''}`.trim() : (stored.name || '');
+                setBookingData((prev) => ({
+                    ...prev,
+                    customerName: name || prev.customerName,
+                    customerEmail: stored.email || prev.customerEmail,
+                }));
+            }
+        } catch (e) {
+            // ignore
+        }
+    }, []);
+
     const [availableSlots, setAvailableSlots] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [bookingSuccess, setBookingSuccess] = useState(false);
@@ -335,7 +373,9 @@ const RestaurantBooking = () => {
                                     )}
                                 </>
                             ) : (
-                                <li>ยังไม่มีการตั้งค่าการจองสำหรับร้านนี้</li>
+                                <li>ยังไม่มีการตั้งค่าการจองสำหรับร้านนี้
+                                    แนะนำให้ติดต่อทางร้านโดยตรงเพื่อสอบถาม
+                                </li>
                             )}
                         </ul>
                     </div>
