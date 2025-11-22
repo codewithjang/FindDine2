@@ -260,7 +260,7 @@ app.post("/api/restaurants/register", upload.array("photos", 10), async (req, re
 
 // ===== Restaurant List =====
 app.get("/api/restaurants", async (req, res) => {
-  const { filter } = req.query;
+  const { filter, search } = req.query;
   const parseJSON = (v) => {
     if (!v) return [];
     try {
@@ -272,6 +272,8 @@ app.get("/api/restaurants", async (req, res) => {
 
   try {
     const whereClause = {};
+
+    // Apply filter if provided
     if (filter) {
       const contains = (val) => ({ contains: `"${val}"` });
       switch (filter) {
@@ -291,6 +293,16 @@ app.get("/api/restaurants", async (req, res) => {
           whereClause.locationStyles = contains("natural_style");
           break;
       }
+    }
+
+    // Apply search if provided
+    if (search && search.trim()) {
+      const q = search.trim();
+      whereClause.OR = [
+        { restaurantName: { contains: q, mode: "insensitive" } },
+        { foodType: { contains: q, mode: "insensitive" } },
+        { description: { contains: q, mode: "insensitive" } },
+      ];
     }
 
     // ✅ ดึงร้าน + รีวิวเฉลี่ยและจำนวน

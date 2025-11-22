@@ -108,7 +108,41 @@ export default function Navbar() {
       const res = await fetch(`http://localhost:3001/api/restaurants?search=${encodeURIComponent(value)}`);
       const data = await res.json();
 
-      setSuggestions(data.slice(0, 8));
+      // ✅ จัดเรียงผลการค้นหาตามความเกี่ยวข้อง
+      const query = value.trim().toLowerCase();
+      const scored = data.map((restaurant) => {
+        const name = (restaurant.restaurantName || '').toLowerCase();
+        const type = (restaurant.foodType || '').toLowerCase();
+        const desc = (restaurant.description || '').toLowerCase();
+        
+        let score = 0;
+        
+        // ✅ Exact match ชื่อร้าน -> ชั้นสูงสุด (100)
+        if (name === query) score = 100;
+        // ✅ Starts with query ชื่อร้าน -> ชั้น 2 (80)
+        else if (name.startsWith(query)) score = 80;
+        // ✅ Contains query ชื่อร้าน -> ชั้น 3 (60)
+        else if (name.includes(query)) score = 60;
+        // ✅ Exact match ประเภท -> ชั้น 4 (50)
+        else if (type === query) score = 50;
+        // ✅ Starts with query ประเภท -> ชั้น 5 (40)
+        else if (type.startsWith(query)) score = 40;
+        // ✅ Contains query ประเภท -> ชั้น 6 (30)
+        else if (type.includes(query)) score = 30;
+        // ✅ Contains query คำอธิบาย -> ชั้น 7 (10)
+        else if (desc.includes(query)) score = 10;
+        
+        return { ...restaurant, score };
+      });
+
+      // เรียงลำดับจากคะแนนสูงสุด แล้วเอา 8 อันแรก
+      const sorted = scored
+        .filter(r => r.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 8)
+        .map(({ score, ...rest }) => rest); // ลบ score field ออก
+
+      setSuggestions(sorted);
       setShowSuggestions(true);
     }, 300);
   };
@@ -157,31 +191,31 @@ export default function Navbar() {
 
             {/* แถบค้นหา - ซ่อนสำหรับแอดมิน */}
             {!isAdmin && (
-            <div className="hidden md:flex items-center relative">
-              <input
-                type="text"
-                placeholder="ค้นหาร้านอาหาร..."
-                value={searchQuery}
-                onChange={handleInputChange}
-                onKeyPress={(e) => e.key === "Enter" && handleSearch(e)}
-                className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-full"
-              />
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+              <div className="hidden md:flex items-center relative">
+                <input
+                  type="text"
+                  placeholder="ค้นหาร้านอาหาร..."
+                  value={searchQuery}
+                  onChange={handleInputChange}
+                  onKeyPress={(e) => e.key === "Enter" && handleSearch(e)}
+                  className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-full"
+                />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
 
-              {showSuggestions && (
-                <ul className="absolute left-0 mt-1 w-full bg-white border rounded-lg shadow-lg max-h-56 overflow-y-auto z-50">
-                  {suggestions.map((item) => (
-                    <li
-                      key={item.id}
-                      className="px-4 py-2 hover:bg-orange-100 cursor-pointer"
-                      onMouseDown={() => handleSuggestionClick(item)}
-                    >
-                      {item.restaurantName}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                {showSuggestions && (
+                  <ul className="absolute top-full left-0 mt-2 w-64 bg-white border rounded-lg shadow-lg max-h-56 overflow-y-auto overflow-x-hidden z-50">
+                    {suggestions.map((item) => (
+                      <li
+                        key={item.id}
+                        className="px-4 py-2 hover:bg-orange-100 cursor-pointer truncate"
+                        onMouseDown={() => handleSuggestionClick(item)}
+                      >
+                        {item.restaurantName}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
 
             {/* USER ICON / MENU */}
