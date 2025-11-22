@@ -15,7 +15,7 @@ import RestaurantMap from './component/RestaurantMap';
 const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemoveFromCompare }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState({});
     const [userLocation, setUserLocation] = useState(null);
-    
+
     // เลือกร้านจาก allRestaurants ที่ตรงกับ compareRestaurants
     const restaurants = allRestaurants.filter(r => compareRestaurants.includes(r.id));
 
@@ -41,15 +41,15 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
         const R = 6371; // รัศมีของโลก (กิโลเมตร)
         const dLat = (lat2 - lat1) * (Math.PI / 180);
         const dLon = (lon2 - lon1) * (Math.PI / 180);
-        
+
         const a =
             Math.sin(dLat / 2) * Math.sin(dLat / 2) +
             Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        
+
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         const distance = R * c; // ระยะทางเป็นกิโลเมตร
-        
+
         return distance.toFixed(2);
     };
 
@@ -58,14 +58,14 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
         if (!userLocation || !restaurant.latitude || !restaurant.longitude) {
             return "-";
         }
-        
+
         const distance = calculateDistance(
             userLocation.lat,
             userLocation.lng,
             Number(restaurant.latitude),
             Number(restaurant.longitude)
         );
-        
+
         return `${distance} km`;
     };
 
@@ -106,7 +106,7 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
     const nextImage = (restaurantId) => {
         const restaurant = restaurants.find(r => r.id === restaurantId);
         if (!restaurant || !restaurant.photos || restaurant.photos.length === 0) return;
-        
+
         const current = currentImageIndex[restaurantId] || 0;
         setCurrentImageIndex({
             ...currentImageIndex,
@@ -117,7 +117,7 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
     const prevImage = (restaurantId) => {
         const restaurant = restaurants.find(r => r.id === restaurantId);
         if (!restaurant || !restaurant.photos || restaurant.photos.length === 0) return;
-        
+
         const current = currentImageIndex[restaurantId] || 0;
         setCurrentImageIndex({
             ...currentImageIndex,
@@ -241,7 +241,7 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
                                         const photos = normalizePhotos(restaurant.photos);
                                         const currentIdx = currentImageIndex[restaurant.id] || 0;
                                         const currentPhoto = photos?.[currentIdx];
-                                        
+
                                         return (
                                             <td key={restaurant.id} className="p-4 text-center">
                                                 {photos && photos.length > 0 ? (
@@ -501,7 +501,12 @@ const RestaurantCompare = ({ compareRestaurants, allRestaurants, onBack, onRemov
 
                                 {/* Map */}
                                 <tr>
-                                    <td className="p-4 font-medium text-gray-700 bg-gray-50">แผนที่</td>
+                                    <td className="p-4 font-medium text-gray-700 bg-gray-50">
+                                        แผนที่<br />
+                                        <span className="text-sm text-gray-400 font-normal">
+                                            *คลิกบนแผนที่เพื่อนำทาง
+                                        </span>
+                                    </td>
                                     {restaurants.map((restaurant) => (
                                         <td key={restaurant.id} className="p-4">
                                             {restaurant.latitude && restaurant.longitude ? (
