@@ -512,7 +512,25 @@ const ManageReviews = () => {
     const fetchReviews = async () => {
         try {
             const res = await axios.get("http://localhost:3001/api/reviews");
-            setReviews(res.data || []);
+            let reviewsData = res.data || [];
+
+            // If backend didn't include restaurant relation, fetch restaurants and map names
+            const needsRestaurantFill = reviewsData.length > 0 && reviewsData.some(r => !r.restaurant);
+            if (needsRestaurantFill) {
+              try {
+                const rres = await axios.get("http://localhost:3001/api/restaurants");
+                const map = {};
+                (rres.data || []).forEach(rest => { map[rest.id] = rest.restaurantName; });
+                reviewsData = reviewsData.map(r => ({
+                  ...r,
+                  restaurant: r.restaurant || { restaurantName: map[r.restaurantId] || "ไม่ระบุชื่อร้าน" }
+                }));
+              } catch (e) {
+                console.warn("Could not fetch restaurants to fill names", e);
+              }
+            }
+
+            setReviews(reviewsData);
             setLoading(false);
         } catch (err) {
             console.error("Error fetching reviews:", err);
@@ -558,6 +576,7 @@ const ManageReviews = () => {
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <p className="font-semibold">{review.name}</p>
+                                    <p className="text-sm text-gray-600">🏪 {review.restaurant?.restaurantName || "ไม่ระบุชื่อร้าน"}</p>
                                     <p className="text-sm text-gray-600">⭐ {review.rating}/5</p>
                                 </div>
                                 <button
