@@ -194,7 +194,7 @@ export default function Navbar() {
               <div className="hidden md:flex items-center relative">
                 <input
                   type="text"
-                  placeholder="ค้นหาร้านอาหาร..."
+                  placeholder="ค้นหาชื่อร้านอาหาร..."
                   value={searchQuery}
                   onChange={handleInputChange}
                   onKeyPress={(e) => e.key === "Enter" && handleSearch(e)}
