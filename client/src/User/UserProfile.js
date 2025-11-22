@@ -57,7 +57,6 @@ export default function UserProfile() {
         <div className="space-y-3 text-gray-800 text-base">
           <div><span className="font-semibold">ชื่อ:</span> {userProfile.firstName} {userProfile.lastName}</div>
           <div><span className="font-semibold">อีเมล:</span> {userProfile.email}</div>
-          <div><span className="font-semibold">ID:</span> {userProfile.id}</div>
           <div><span className="font-semibold">สร้างเมื่อ:</span> {userProfile.createdAt ? new Date(userProfile.createdAt).toLocaleString() : '-'}</div>
           <div><span className="font-semibold">อัปเดตล่าสุด:</span> {userProfile.updatedAt ? new Date(userProfile.updatedAt).toLocaleString() : '-'}</div>
         </div>
