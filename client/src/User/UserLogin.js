@@ -167,7 +167,7 @@ const LoginForm = () => {
       </div>
 
       {/* ปุ่ม Google Login */}
-      <button
+      {/* <button
         onClick={handleGoogleLogin}
         className="w-full mt-5 border-2 border-gray-400 rounded-3xl px-4 py-3 shadow-lg hover:bg-gray-100 active:bg-gray-300 transition-all flex items-center justify-center gap-2 text-sm"
       >
@@ -193,7 +193,7 @@ const LoginForm = () => {
         c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
         </svg>
         <span>เข้าสู่ระบบด้วย Google</span>
-      </button>
+      </button> */}
     </div>
       
     </div >
