@@ -455,7 +455,6 @@ export default function RestaurantDashboard() {
                     <div className="flex space-x-8">
                         {[
                             { id: 'overview', label: 'ภาพรวม', icon: BarChart3 },
-                            { id: 'posts', label: 'โพสต์', icon: FileText },
                             ...(hasReservation ? [{ id: 'bookings', label: 'การจอง', icon: Calendar }] : []),
                             { id: 'reviews', label: 'รีวิว', icon: MessageSquare },
                             { id: 'profile', label: 'โปรไฟล์', icon: Edit }
@@ -565,124 +564,6 @@ export default function RestaurantDashboard() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === 'posts' && (
-                    <div className="space-y-6">
-                        {/* Create Post Section */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-gray-900">สร้างโพสต์ใหม่</h3>
-                                <button
-                                    onClick={() => setShowPostModal(true)}
-                                    className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    <span>โพสต์ใหม่</span>
-                                </button>
-                            </div>
-
-                            <div className="flex items-center space-x-4 text-sm text-gray-600">
-                                <div className="flex items-center space-x-1">
-                                    <FileText className="w-4 h-4" />
-                                    <span>โพสต์ทั่วไป</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                    <Image className="w-4 h-4" />
-                                    <span>เมนูอาหาร</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                    <Tag className="w-4 h-4" />
-                                    <span>โปรโมชั่น</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Posts Feed */}
-                        <div className="space-y-4">
-                            {posts.map((post) => (
-                                <div key={post.id} className="bg-white rounded-lg shadow-sm border border-gray-200">
-                                    {/* Post Header */}
-                                    <div className="px-6 py-4 border-b border-gray-100">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center">
-                                                    <span className="text-white font-bold text-lg">P</span>
-                                                </div>
-                                                <div>
-                                                    <h4 className="font-semibold text-gray-900">{restaurant ? restaurant.restaurantName : ''}</h4>
-                                                    <div className="flex items-center space-x-2">
-                                                        <span className="text-sm text-gray-500">{post.timestamp}</span>
-                                                        {post.isPromoted && (
-                                                            <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded-full">
-                                                                โปรโมท
-                                                            </span>
-                                                        )}
-                                                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${post.type === 'menu' ? 'bg-blue-100 text-blue-800' :
-                                                            post.type === 'promotion' ? 'bg-green-100 text-green-800' :
-                                                                'bg-gray-100 text-gray-800'
-                                                            }`}>
-                                                            {post.type === 'menu' ? 'เมนู' : post.type === 'promotion' ? 'โปรโมชั่น' : 'ทั่วไป'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <button className="p-1 text-gray-400 hover:text-gray-600">
-                                                <MoreHorizontal className="w-5 h-5" />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Post Content */}
-                                    <div className="px-6 py-4">
-                                        <p className="text-gray-900 whitespace-pre-wrap">{post.content}</p>
-
-                                        {/* Post Images */}
-                                        {post.images && post.images.length > 0 && (
-                                            <div className="mt-4">
-                                                <div className={`grid gap-2 ${post.images.length === 1 ? 'grid-cols-1' :
-                                                    post.images.length === 2 ? 'grid-cols-2' :
-                                                        'grid-cols-2'
-                                                    }`}>
-                                                    {post.images.map((image, index) => (
-                                                        <div key={index} className="bg-gray-200 rounded-lg h-64 flex items-center justify-center">
-                                                            <Camera className="w-12 h-12 text-gray-400" />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Post Actions */}
-                                    <div className="px-6 py-3 border-t border-gray-100">
-                                        <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
-                                            <span>{post.likes} คนถูกใจ</span>
-                                            <div className="flex items-center space-x-4">
-                                                <span>{post.comments} ความคิดเห็น</span>
-                                                <span>{post.shares} แชร์</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center justify-around border-t border-gray-100 pt-3">
-                                            <button className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                                                <ThumbsUp className="w-4 h-4" />
-                                                <span>ถูกใจ</span>
-                                            </button>
-                                            <button className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                                                <MessageCircle className="w-4 h-4" />
-                                                <span>แสดงความคิดเห็น</span>
-                                            </button>
-                                            <button className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                                                <Share2 className="w-4 h-4" />
-                                                <span>แชร์</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
                         </div>
                     </div>
                 )}
