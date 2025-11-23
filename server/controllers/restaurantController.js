@@ -1,5 +1,6 @@
 const Restaurant = require('../models/restaurant');
-
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Mapping tables
 const foodTypeOptions = [
@@ -93,11 +94,62 @@ exports.getAll = async (req, res) => {
 };
 
 exports.getById = async (req, res) => {
-  const restaurant = await Restaurant.findById(Number(req.params.id));
-  if (!restaurant) return res.status(404).json({ error: 'Not found' });
-  const transformed = transformRestaurant(restaurant);
-  console.log('transformed restaurant:', transformed);
-  res.json(transformed);
+  console.log("HIT getById:", req.params.id);
+
+  const id = Number(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: 'Invalid ID' });
+
+  try {
+    const restaurant = await prisma.restaurant.findUnique({
+      where: { id },
+      include: {
+        booking: true,
+        review: true
+      }
+    });
+
+    if (!restaurant) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+
+    // ---- Calculate stats ----
+    const ratings = restaurant.review.map(r => r.rating);
+    const avgRating = ratings.length
+      ? ratings.reduce((sum, v) => sum + v, 0) / ratings.length
+      : 0;
+
+    // ---- Parse array fields ----
+    const parse = (v) => {
+      if (!v) return [];
+      try { return JSON.parse(v); } catch { return []; }
+    };
+
+    // ---- Transform data for frontend ----
+    const transformed = {
+      ...restaurant,
+      rating: Number(avgRating.toFixed(1)),
+      reviewCount: ratings.length,
+      bookingCount: restaurant.booking.length,
+
+      facilities: parse(restaurant.facilities),
+      paymentOptions: parse(restaurant.paymentOptions),
+      serviceOptions: parse(restaurant.serviceOptions),
+      locationStyles: parse(restaurant.locationStyles),
+      lifestyles: parse(restaurant.lifestyles),
+      photos: parse(restaurant.photos),
+
+      // labels
+      ...transformRestaurant(restaurant)
+    };
+
+    console.log("FINAL RESPONSE:", transformed);
+
+    res.json(transformed);
+
+  } catch (err) {
+    console.error("getById error:", err);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
 function safeParseArray(value) {

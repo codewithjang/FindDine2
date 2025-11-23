@@ -138,13 +138,21 @@ const RestaurantDetail = (props) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-
   // ดึงข้อมูลร้านอาหารจาก backend ตาม restaurantId
   useEffect(() => {
     if (!restaurantId) return;
     setLoading(true);
     setError(null);
     const token = localStorage.getItem('token');
+    axios.patch(`http://localhost:3001/api/restaurants/${restaurantId}/view`)
+      .then(res => {
+        if (res.data?.viewCount !== undefined) {
+          setRestaurant(prev => ({ ...(prev || {}), viewCount: res.data.viewCount }));
+        }
+      })
+      .catch(err => {
+        console.debug('Failed to increment viewCount', err?.message || err);
+      });
     axios
       .get(
         `http://localhost:3001/api/restaurants/${restaurantId}`,
@@ -675,8 +683,8 @@ const RestaurantDetail = (props) => {
                                     <Star
                                       key={i}
                                       className={`w-4 h-4 ${i < r.rating
-                                          ? "fill-yellow-400 text-yellow-400"
-                                          : "text-gray-300"
+                                        ? "fill-yellow-400 text-yellow-400"
+                                        : "text-gray-300"
                                         }`}
                                     />
                                   ))}

@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3001;
 app.use(
   cors({
     origin: "http://localhost:3000",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   })
 );
@@ -71,21 +71,6 @@ app.use("/api/booking-settings", bookingSettingsRoutes);
 app.get("/", (req, res) => {
   res.send("FindDine Backend API is running!");
 });
-
-// ===== User Registration =====
-// app.post("/api/users/register", async (req, res) => {
-//   const { firstName, lastName, email, password } = req.body;
-//   try {
-//     const hashedPassword = await bcrypt.hash(password, 10);
-//     const newUser = await prisma.user.create({
-//       data: { firstName, lastName, email, password: hashedPassword },
-//     });
-//     res.status(201).json({ id: newUser.id, email: newUser.email });
-//   } catch (error) {
-//     console.error("Error creating user:", error);
-//     res.status(400).json({ error: "Failed to create user" });
-//   }
-// });
 
 // ===== User Registration =====
 app.post("/api/users/register", async (req, res) => {
@@ -470,26 +455,46 @@ app.put("/api/restaurants/:id", upload.array("photos", 10), async (req, res) => 
 
 // ===== Get Restaurant by ID =====
 app.get("/api/restaurants/:id", async (req, res) => {
+  console.log("HIT /api/restaurants/:id", req.params.id);
   const { id } = req.params;
+
+  const parseJSON = (v) => {
+    if (!v) return [];
+    try {
+      const p = JSON.parse(v);
+      return Array.isArray(p) ? p : [];
+    } catch {
+      return [];
+    }
+  };
+
   try {
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: parseInt(id) },
-    });
-    if (!restaurant) return res.status(404).json({ error: "Restaurant not found" });
-
-    // ✅ parse ให้เป็น array ทุก field
-    const parseJSON = (v) => {
-      if (!v) return [];
-      try {
-        const p = JSON.parse(v);
-        return Array.isArray(p) ? p : [];
-      } catch {
-        return [];
+      include: {
+        booking: true,
+        review: true,
       }
-    };
+    });
 
+    if (!restaurant) {
+      return res.status(404).json({ error: "Restaurant not found" });
+    }
+
+    // === Calculate review summary ===
+    const ratings = restaurant.review.map((r) => r.rating);
+    const avgRating = ratings.length
+      ? ratings.reduce((sum, v) => sum + v, 0) / ratings.length
+      : 0;
+
+    // === Return updated data ===
     res.json({
       ...restaurant,
+      rating: Number(avgRating.toFixed(1)),
+      reviewCount: ratings.length,
+      bookingCount: restaurant.booking.length,
+
+      // Parse JSON fields
       photos: parseJSON(restaurant.photos),
       facilities: parseJSON(restaurant.facilities),
       paymentOptions: parseJSON(restaurant.paymentOptions),
@@ -497,11 +502,13 @@ app.get("/api/restaurants/:id", async (req, res) => {
       locationStyles: parseJSON(restaurant.locationStyles),
       lifestyles: parseJSON(restaurant.lifestyles),
     });
+
   } catch (error) {
     console.error("Error fetching restaurant:", error);
     res.status(500).json({ error: "Failed to fetch restaurant" });
   }
 });
+
 
 // ===== Toggle Booking Availability =====
 app.put("/api/restaurants/:id/toggle-booking", async (req, res) => {

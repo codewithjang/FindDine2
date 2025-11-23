@@ -100,6 +100,25 @@ router.put('/:id', upload.array('photos', 10), restaurantController.update);
 
 router.delete('/:id', restaurantController.delete);
 
+// เพิ่ม view count เมื่อผู้ใช้เปิดดูรายละเอียดร้าน (ไม่ต้องตรวจสอบ user)
+router.patch('/:id/view', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
+
+    const updated = await prisma.restaurant.update({
+      where: { id },
+      data: { viewCount: { increment: 1 } },
+      select: { id: true, viewCount: true }
+    });
+
+    return res.json({ success: true, viewCount: updated.viewCount });
+  } catch (err) {
+    console.error('PATCH /api/restaurants/:id/view error', err);
+    return res.status(500).json({ error: 'Failed to increment viewCount' });
+  }
+});
+
 // ====== Login route ======
 router.post('/login', restaurantController.login);
 

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useEffect } from 'react';
 import axios from 'axios';
 import bg from '../assets/bg/bgMainRes.png';
 import RestaurantMap from '../component/RestaurantMap';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import bannerBg from '../assets/bg/Banner.png';
 import ResBookingsList from '../component/ResBookingsList';
 import {
@@ -21,22 +21,12 @@ import {
     Clock,
     Eye,
     Edit,
-    Camera,
     Settings,
     BarChart3,
     MessageSquare,
     DollarSign,
-    Plus,
-    Image,
-    FileText,
-    Send,
-    ThumbsUp,
-    MessageCircle,
-    Share2,
-    MoreHorizontal,
     Car,
     Waves,
-    Tag,
     ChevronLeft,
     ChevronRight,
     Leaf
@@ -152,69 +142,13 @@ export default function RestaurantDashboard() {
     const { id } = useParams();
     const restaurantId = id;
     const [activeTab, setActiveTab] = useState('overview');
-    const [showPostModal, setShowPostModal] = useState(false);
-    const [postContent, setPostContent] = useState('');
-    const [postType, setPostType] = useState('general'); // general, menu, promotion
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    // Mock data สำหรับโพสต์
-    const [posts, setPosts] = useState([
-        {
-            id: 1,
-            content: "โปรโมชั่นพิเศษ! ลด 20% ทุกเมนูซีฟู้ดวันนี้",
-            type: "promotion",
-            timestamp: "1 ชม. ที่แล้ว",
-            isPromoted: true,
-            images: [],
-            likes: 15,
-            comments: 3,
-            shares: 2
-        },
-        {
-            id: 2,
-            content: "เมนูใหม่! ข้าวผัดปูทะเล",
-            type: "menu",
-            timestamp: "2 ชม. ที่แล้ว",
-            isPromoted: false,
-            images: [],
-            likes: 8,
-            comments: 1,
-            shares: 0
-        },
-        {
-            id: 3,
-            content: "ขอบคุณลูกค้าทุกท่านที่มาอุดหนุน",
-            type: "general",
-            timestamp: "3 ชม. ที่แล้ว",
-            isPromoted: false,
-            images: [],
-            likes: 5,
-            comments: 0,
-            shares: 1
-        }
-    ]);
-
-    // ฟังก์ชันสร้างโพสต์ใหม่
-    const handleCreatePost = () => {
-        const newPost = {
-            id: posts.length + 1,
-            content: postContent,
-            type: postType,
-            timestamp: "ขณะนี้",
-            isPromoted: postType === "promotion",
-            images: [], // สามารถเพิ่ม logic สำหรับรูปภาพได้ภายหลัง
-            likes: 0,
-            comments: 0,
-            shares: 0
-        };
-        setPosts([newPost, ...posts]);
-        setShowPostModal(false);
-        setPostContent("");
-        setPostType("general");
-    };
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [activeTab2, setActiveTab2] = useState('overview');
     const [reviews, setReviews] = useState([]);
+    const navigate = useNavigate();
+    const detailTimerRef = useRef(null);
 
     // ดึงข้อมูลร้านอาหารจาก backend ทุกครั้งที่ component mount
     const [restaurant, setRestaurant] = useState(null);
@@ -306,8 +240,11 @@ export default function RestaurantDashboard() {
                     serviceOptions: normalizeArray(data.serviceOptions),
                     locationStyles: normalizeArray(data.locationStyles),
                     lifestyles: normalizeArray(data.lifestyles),
+                    bookingCount: data.bookingCount ?? 0,
+                    reviewCount: data.reviewCount ?? 0,
                 };
                 setRestaurant(restaurantObj);
+                console.log("DATA FROM BACKEND:", data);
 
             })
             .catch((err) => {
@@ -336,6 +273,7 @@ export default function RestaurantDashboard() {
                 });
             });
     }, []);
+    
 
     useEffect(() => {
         if (!restaurantId) return;
@@ -398,19 +336,13 @@ export default function RestaurantDashboard() {
         }
     };
 
-    // ข้อมูลสถิติ (mock data)
+    // ข้อมูลสถิติ (จากข้อมูลจริงของร้าน)
     const stats = [
-        { label: 'จองทั้งหมด', value: '12', icon: Calendar, color: 'text-orange-500' },
-        { label: 'รีวิวทั้งหมด', value: '8', icon: Star, color: 'text-orange-500' },
-        { label: 'ผู้เข้าชมโปรไฟล์', value: '324', icon: Eye, color: 'text-orange-500' },
-        { label: 'โพสต์ทั้งหมด', value: '47', icon: MessageSquare, color: 'text-orange-500' }
+        { label: 'จองทั้งหมด', value: restaurant?.bookingCount ?? 0, icon: Calendar, color: 'text-orange-500' },
+        { label: 'รีวิวทั้งหมด', value: restaurant?.reviewCount ?? 0, icon: Star, color: 'text-orange-500' },
+        { label: 'ผู้เข้าชมโปรไฟล์', value: restaurant?.viewCount ?? 0, icon: Eye, color: 'text-orange-500' }
     ];
 
-    const recentBookings = [
-        { id: 1, customer: 'คุณสมชาย', time: '19:00', guests: 4, status: 'confirmed' },
-        { id: 2, customer: 'คุณมาลี', time: '20:30', guests: 2, status: 'pending' },
-        { id: 3, customer: 'คุณจอห์น', time: '18:00', guests: 6, status: 'confirmed' }
-    ];
 
     const recentReviews = reviews.slice(0, 5);
 
@@ -511,25 +443,6 @@ export default function RestaurantDashboard() {
                                 </div>
                                 <div className="p-6">
                                     <div className="space-y-4">
-                                        {recentBookings.map((booking) => (
-                                            <div key={booking.id} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                                                        <Users className="w-5 h-5 text-orange-600" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-medium text-gray-900">{booking.customer}</p>
-                                                        <p className="text-sm text-gray-500">{booking.time} • {booking.guests} ท่าน</p>
-                                                    </div>
-                                                </div>
-                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${booking.status === 'confirmed'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-yellow-100 text-yellow-800'
-                                                    }`}>
-                                                    {booking.status === 'confirmed' ? 'ยืนยันแล้ว' : 'รอยืนยัน'}
-                                                </span>
-                                            </div>
-                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -562,94 +475,6 @@ export default function RestaurantDashboard() {
                                             ))
                                         )}
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Create Post Modal */}
-                {showPostModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
-                            <div className="px-6 py-4 border-b border-gray-200">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-semibold text-gray-900">สร้างโพสต์ใหม่</h3>
-                                    <button
-                                        onClick={() => setShowPostModal(false)}
-                                        className="p-1 text-gray-400 hover:text-gray-600"
-                                    >
-                                        <span className="sr-only">ปิด</span>
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="p-6">
-                                {/* Post Type Selection */}
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">ประเภทโพสต์</label>
-                                    <div className="flex space-x-4">
-                                        {[
-                                            { value: 'general', label: 'ทั่วไป', icon: FileText },
-                                            { value: 'menu', label: 'เมนูอาหาร', icon: Image },
-                                            { value: 'promotion', label: 'โปรโมชั่น', icon: Tag }
-                                        ].map((type) => (
-                                            <button
-                                                key={type.value}
-                                                onClick={() => setPostType(type.value)}
-                                                className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${postType === type.value
-                                                    ? 'border-orange-500 bg-orange-50 text-orange-700'
-                                                    : 'border-gray-200 hover:border-gray-300'
-                                                    }`}
-                                            >
-                                                <type.icon className="w-4 h-4" />
-                                                <span>{type.label}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Post Content */}
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">เนื้อหาโพสต์</label>
-                                    <textarea
-                                        value={postContent}
-                                        onChange={(e) => setPostContent(e.target.value)}
-                                        placeholder="เขียนเนื้อหาโพสต์ของคุณ..."
-                                        rows={6}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                                    />
-                                </div>
-
-                                {/* Media Upload */}
-                                <div className="mb-6">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">รูปภาพ</label>
-                                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
-                                        <Camera className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                                        <p className="text-sm text-gray-600">คลิกเพื่อเพิ่มรูปภาพ หรือลากไฟล์มาวาง</p>
-                                        <p className="text-xs text-gray-500 mt-1">รองรับไฟล์ JPG, PNG ขนาดไม่เกิน 5MB</p>
-                                    </div>
-                                </div>
-
-                                {/* Action Buttons */}
-                                <div className="flex justify-end space-x-3">
-                                    <button
-                                        onClick={() => setShowPostModal(false)}
-                                        className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                                    >
-                                        ยกเลิก
-                                    </button>
-                                    <button
-                                        onClick={handleCreatePost}
-                                        disabled={!postContent.trim()}
-                                        className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        <Send className="w-4 h-4" />
-                                        <span>โพสต์</span>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -708,8 +533,8 @@ export default function RestaurantDashboard() {
                                                     <Star
                                                         key={i}
                                                         className={`w-4 h-4 ${i < review.rating
-                                                                ? "text-yellow-400 fill-yellow-400"
-                                                                : "text-gray-300"
+                                                            ? "text-yellow-400 fill-yellow-400"
+                                                            : "text-gray-300"
                                                             }`}
                                                     />
                                                 ))}

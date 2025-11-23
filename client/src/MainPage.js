@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import bg from './assets/bgMain.png';
 import {
   MoonStar,
@@ -12,7 +12,7 @@ import {
   DollarSign,
   GitCompare
 } from 'lucide-react';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import RestaurantCompare from './CompareRestaurant';
 
 import axios from 'axios';
@@ -114,6 +114,14 @@ export default function MainPage() {
   const [distance, setDistance] = useState(1000); // ค่า default 1 กม.
   const [selectedRestaurantId, setSelectedRestaurantId] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
+  const navigate = useNavigate();
+  const detailTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (detailTimerRef.current) clearTimeout(detailTimerRef.current);
+    };
+  }, []);
 
   // ดึงตำแหน่งผู้ใช้
   useEffect(() => {
@@ -726,13 +734,18 @@ export default function MainPage() {
 
                 {/* Action Buttons */}
                 <div className="flex space-x-2">
-                  <Link
-                    to={`/RestaurantDetail/${restaurant.id}`}
+                  <button
+                    onClick={() => {
+                      if (detailTimerRef.current) clearTimeout(detailTimerRef.current);
+                      detailTimerRef.current = setTimeout(() => {
+                        navigate(`/RestaurantDetail/${restaurant.id}`);
+                      }, 300);
+                    }}
                     className="flex-1 flex items-center justify-center gap-1 bg-gray-100 text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-200 py-2 px-4 rounded-lg transition-colors font-medium text-center"
                     style={{ minWidth: 0 }}
                   >
                     ดูรายละเอียด
-                  </Link>
+                  </button>
                   <button
                     onClick={() => handleCompare(restaurant.id)}
                     className={`flex-1 flex items-center justify-center gap-1 py-2 px-4 rounded-lg font-medium transition-colors text-center border border-orange-600 shadow-md ${compareList.includes(restaurant.id)
