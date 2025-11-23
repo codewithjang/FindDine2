@@ -147,6 +147,7 @@ export default function RestaurantDashboard() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [activeTab2, setActiveTab2] = useState('overview');
     const [reviews, setReviews] = useState([]);
+    const [recentBookings, setRecentBookings] = useState([]);
     const navigate = useNavigate();
     const detailTimerRef = useRef(null);
 
@@ -273,7 +274,7 @@ export default function RestaurantDashboard() {
                 });
             });
     }, []);
-    
+
 
     useEffect(() => {
         if (!restaurantId) return;
@@ -282,6 +283,18 @@ export default function RestaurantDashboard() {
             .then(res => setReviews(res.data))
             .catch(err => console.error("Error loading reviews:", err));
     }, [restaurantId]);
+
+    useEffect(() => {
+        axios.get(`http://localhost:3001/api/bookings/restaurant/${restaurantId}`)
+            .then(res => {
+                const sorted = res.data.sort(
+                    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+                );
+                setRecentBookings(sorted.slice(0, 5));
+            })
+            .catch(err => console.error("Error loading bookings:", err));
+    }, [restaurantId]);
+
 
 
     const renderStars = (rating) => {
@@ -293,6 +306,11 @@ export default function RestaurantDashboard() {
             />
         ));
     };
+
+    const averageRating = reviews.length
+        ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+        : 0;
+
 
     const nextImage = () => {
         setCurrentImageIndex((prev) =>
@@ -340,6 +358,7 @@ export default function RestaurantDashboard() {
     const stats = [
         { label: 'จองทั้งหมด', value: restaurant?.bookingCount ?? 0, icon: Calendar, color: 'text-orange-500' },
         { label: 'รีวิวทั้งหมด', value: restaurant?.reviewCount ?? 0, icon: Star, color: 'text-orange-500' },
+        { label: 'รีวิวเฉลี่ย', value: averageRating, icon: Star, color: 'text-yellow-500' },
         { label: 'ผู้เข้าชมโปรไฟล์', value: restaurant?.viewCount ?? 0, icon: Eye, color: 'text-orange-500' }
     ];
 
@@ -436,14 +455,41 @@ export default function RestaurantDashboard() {
 
                         {/* Recent Activities */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
                             {/* Recent Bookings */}
                             <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                                 <div className="px-6 py-4 border-b border-gray-200">
                                     <h3 className="text-lg font-semibold text-gray-900">การจองล่าสุด</h3>
                                 </div>
+
                                 <div className="p-6">
-                                    <div className="space-y-4">
-                                    </div>
+                                    {recentBookings.length === 0 ? (
+                                        <p className="text-gray-500 text-center">ยังไม่มีการจอง</p>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {recentBookings.slice(0, 3).map((b) => (
+                                                <div
+                                                    key={b.id}
+                                                    className="py-3 border-b border-gray-100 last:border-0"
+                                                >
+                                                    <div className="flex justify-between">
+                                                        <p className="font-medium text-gray-900">{b.customerName}</p>
+                                                        <p className="text-sm text-gray-600">
+                                                            {new Date(b.date).toLocaleDateString("th-TH")}
+                                                        </p>
+                                                    </div>
+
+                                                    <p className="text-sm text-gray-600">
+                                                        เวลา: {b.time} | คน: {b.guests}
+                                                    </p>
+
+                                                    <p className="text-xs text-gray-400 mt-1">
+                                                        #{b.id}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -452,22 +498,32 @@ export default function RestaurantDashboard() {
                                 <div className="px-6 py-4 border-b border-gray-200">
                                     <h3 className="text-lg font-semibold text-gray-900">รีวิวล่าสุด</h3>
                                 </div>
+
                                 <div className="p-6">
                                     <div className="space-y-4">
                                         {recentReviews.length === 0 ? (
                                             <p className="text-gray-500 text-center">ยังไม่มีรีวิว</p>
                                         ) : (
-                                            recentReviews.map((review) => (
-                                                <div key={review.id} className="py-3 border-b border-gray-100 last:border-0">
+                                            recentReviews.slice(0, 3).map((review) => (
+                                                <div
+                                                    key={review.id}
+                                                    className="py-3 border-b border-gray-100 last:border-0"
+                                                >
                                                     <div className="flex items-center justify-between mb-2">
                                                         <p className="font-medium text-gray-900">{review.name}</p>
+
                                                         <div className="flex items-center space-x-1">
                                                             {[...Array(review.rating)].map((_, i) => (
-                                                                <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                                                                <Star
+                                                                    key={i}
+                                                                    className="w-4 h-4 text-yellow-400 fill-current"
+                                                                />
                                                             ))}
                                                         </div>
                                                     </div>
+
                                                     <p className="text-sm text-gray-600 mb-1">{review.comment}</p>
+
                                                     <p className="text-xs text-gray-400">
                                                         {new Date(review.createdAt).toLocaleDateString("th-TH")}
                                                     </p>
@@ -477,6 +533,7 @@ export default function RestaurantDashboard() {
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
                 )}
