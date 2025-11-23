@@ -533,7 +533,6 @@ const RestaurantDetail = (props) => {
                 <nav className="flex space-x-8 px-6">
                   {[
                     { id: 'overview', label: 'ภาพรวม' },
-                    { id: 'menu', label: 'เมนูแนะนำ' },
                     { id: 'reviews', label: 'รีวิว' }
                   ].map((tab) => (
                     <button
@@ -631,6 +630,7 @@ const RestaurantDetail = (props) => {
                             />
                           ))}
                         </div>
+
                         <input
                           type="text"
                           placeholder="ชื่อ"
@@ -639,6 +639,7 @@ const RestaurantDetail = (props) => {
                           onChange={(e) => setName(e.target.value)}
                           required
                         />
+
                         <input
                           type="email"
                           placeholder="อีเมล (ไม่บังคับ)"
@@ -646,6 +647,7 @@ const RestaurantDetail = (props) => {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                         />
+
                         <textarea
                           placeholder="เขียนรีวิว..."
                           className="w-full mb-3 p-2 border rounded"
@@ -654,10 +656,12 @@ const RestaurantDetail = (props) => {
                           onChange={(e) => setComment(e.target.value)}
                           required
                         />
+
                         <button
                           type="submit"
-                          disabled={submitting}
-                          className={`bg-orange-600 text-white py-2 px-4 rounded-lg ${submitting ? "opacity-50 cursor-not-allowed" : "hover:bg-orange-700"}`}
+                          disabled={submitting || rating === 0}
+                          className={`bg-orange-600 text-white py-2 px-4 rounded-lg ${submitting || rating === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-orange-700"
+                            }`}
                         >
                           {submitting ? "กำลังส่ง..." : "ส่งรีวิว"}
                         </button>
