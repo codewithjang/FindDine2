@@ -64,6 +64,7 @@ export default function ResBookingsList({ restaurantId }) {
         <table className="w-full text-left border-collapse">
           <thead className="bg-orange-50 text-gray-700 text-sm uppercase">
             <tr>
+              <th className="py-3 px-4">รหัสการจอง</th>
               <th className="py-3 px-4">ชื่อ</th>
               <th className="py-3 px-4">เบอร์โทร</th>
               <th className="py-3 px-4 text-center">จำนวนคน</th>
@@ -82,6 +83,7 @@ export default function ResBookingsList({ restaurantId }) {
                     : "hover:bg-orange-50"
                   }`}
               >
+                <td className="py-3 px-4 font-mono text-sm">{`BK${b.id}`}</td>
                 <td className="py-3 px-4 font-medium">{b.customerName}</td>
                 <td className="py-3 px-4">{b.customerPhone}</td>
                 <td className="py-3 px-4 text-center">{b.guests}</td>
@@ -170,7 +172,10 @@ export default function ResBookingsList({ restaurantId }) {
               </div>
             )}
 
-            <div className="space-y-2 bg-orange-50 rounded-lg p-4 mb-4 text-sm text-gray-700">
+              <div className="space-y-2 bg-orange-50 rounded-lg p-4 mb-4 text-sm text-gray-700">
+              <p>
+                <b>รหัสการจอง:</b> {`BK${selected.id}`}
+              </p>
               <p>
                 <b>ชื่อลูกค้า:</b> {selected.customerName}
               </p>
