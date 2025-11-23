@@ -264,6 +264,12 @@ export default function Navbar() {
                       >
                         แก้ไขโปรไฟล์
                       </Link>
+                      <Link
+                        to="/UserBookings"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50"
+                      >
+                        การจองของฉัน
+                      </Link>
 
                       <button
                         onClick={handleLogout}
