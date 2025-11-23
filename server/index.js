@@ -529,11 +529,14 @@ app.put("/api/restaurants/:id/toggle-booking", async (req, res) => {
 
 // ===== Reviews =====
 
-// ✅ ดึงรีวิวของร้าน
+// ✅ ดึงรีวิวของร้าน (exclude hidden reviews)
 app.get("/api/reviews/:restaurantId", async (req, res) => {
   try {
     const reviews = await prisma.review.findMany({
-      where: { restaurantId: parseInt(req.params.restaurantId) },
+      where: { 
+        restaurantId: parseInt(req.params.restaurantId),
+        isHidden: false
+      },
       orderBy: { createdAt: "desc" },
     });
     res.json(reviews);
@@ -554,6 +557,7 @@ app.post("/api/reviews", async (req, res) => {
         email: email && email.trim() !== "" ? email.trim() : null,
         rating: parseFloat(rating),
         comment,
+        isHidden: false
       },
     });
     res.json(newReview);
@@ -566,7 +570,12 @@ app.post("/api/reviews", async (req, res) => {
 app.get("/api/reviews/:restaurantId/summary", async (req, res) => {
   try {
     const restaurantId = parseInt(req.params.restaurantId);
-    const reviews = await prisma.review.findMany({ where: { restaurantId } });
+    const reviews = await prisma.review.findMany({ 
+      where: { 
+        restaurantId,
+        isHidden: false
+      }
+    });
     const count = reviews.length;
     const avg = count > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / count : 0;
     res.json({ average: avg.toFixed(1), count });
@@ -625,6 +634,37 @@ app.delete("/api/reviews/:id", async (req, res) => {
   } catch (error) {
     console.error("Error deleting review:", error);
     res.status(500).json({ error: "Failed to delete review" });
+  }
+});
+
+// ===== Toggle Hide Review (Admin) =====
+app.put("/api/reviews/:id/toggle-hide", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get current review
+    const review = await prisma.review.findUnique({
+      where: { id: parseInt(id) }
+    });
+
+    if (!review) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+
+    // Toggle isHidden status
+    const updatedReview = await prisma.review.update({
+      where: { id: parseInt(id) },
+      data: { isHidden: !review.isHidden }
+    });
+
+    res.json({ 
+      success: true, 
+      message: updatedReview.isHidden ? "Review hidden" : "Review shown",
+      review: updatedReview
+    });
+  } catch (error) {
+    console.error("Error toggling review visibility:", error);
+    res.status(500).json({ error: "Failed to toggle review visibility" });
   }
 });
 

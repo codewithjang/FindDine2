@@ -99,22 +99,42 @@ const DashboardOverview = () => {
         fetchStats();
     }, []);
 
+    const items = [
+        { label: "ผู้ใช้ทั้งหมด", value: stats.users, accent: "from-orange-500 to-orange-700" },
+        { label: "ร้านอาหารทั้งหมด", value: stats.restaurants, accent: "from-orange-500 to-orange-700" },
+        { label: "การจองทั้งหมด", value: stats.bookings, accent: "from-orange-500 to-orange-700" },
+        { label: "รีวิวทั้งหมด", value: stats.reviews, accent: "from-orange-500 to-orange-700" }
+    ];
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-                { label: "ผู้ใช้ทั้งหมด", value: stats.users, color: "bg-blue-100 text-blue-700" },
-                { label: "ร้านอาหารทั้งหมด", value: stats.restaurants, color: "bg-green-100 text-green-700" },
-                { label: "การจองทั้งหมด", value: stats.bookings, color: "bg-yellow-100 text-yellow-700" },
-                { label: "รีวิวทั้งหมด", value: stats.reviews, color: "bg-purple-100 text-purple-700" }
-            ].map((stat, idx) => (
-                <div key={idx} className={`p-6 rounded-lg shadow ${stat.color}`}>
-                    <p className="text-sm font-medium opacity-80">{stat.label}</p>
-                    <p className="text-4xl font-bold mt-2">{stat.value}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+            {items.map((item, index) => (
+                <div
+                    key={index}
+                    className={`
+                        rounded-2xl p-6 shadow-lg 
+                        bg-orange-100 relative overflow-hidden
+                        border border-orange-100
+                        hover:shadow-xl transition-all
+                    `}
+                    style={{ minHeight: "150px" }}
+                >
+                    {/* Accent Ribbon */}
+                    <div
+                        className={`absolute top-0 right-0 w-20 h-20 rounded-bl-full bg-gradient-to-br ${item.accent} opacity-20`}
+                    ></div>
+
+                    <p className="text-gray-500 text-sm font-medium">{item.label}</p>
+
+                    <p className="text-4xl font-bold mt-3 bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
+                        {item.value}
+                    </p>
                 </div>
             ))}
         </div>
     );
 };
+
 
 // ===== Manage Users =====
 const ManageUsers = () => {
@@ -504,6 +524,7 @@ const ManageReviews = () => {
     const [reviews, setReviews] = useState([]);
     const [search, setSearch] = useState("");
     const [loading, setLoading] = useState(true);
+    const [togglingId, setTogglingId] = useState(null);
 
     useEffect(() => {
         fetchReviews();
@@ -517,17 +538,17 @@ const ManageReviews = () => {
             // If backend didn't include restaurant relation, fetch restaurants and map names
             const needsRestaurantFill = reviewsData.length > 0 && reviewsData.some(r => !r.restaurant);
             if (needsRestaurantFill) {
-              try {
-                const rres = await axios.get("http://localhost:3001/api/restaurants");
-                const map = {};
-                (rres.data || []).forEach(rest => { map[rest.id] = rest.restaurantName; });
-                reviewsData = reviewsData.map(r => ({
-                  ...r,
-                  restaurant: r.restaurant || { restaurantName: map[r.restaurantId] || "ไม่ระบุชื่อร้าน" }
-                }));
-              } catch (e) {
-                console.warn("Could not fetch restaurants to fill names", e);
-              }
+                try {
+                    const rres = await axios.get("http://localhost:3001/api/restaurants");
+                    const map = {};
+                    (rres.data || []).forEach(rest => { map[rest.id] = rest.restaurantName; });
+                    reviewsData = reviewsData.map(r => ({
+                        ...r,
+                        restaurant: r.restaurant || { restaurantName: map[r.restaurantId] || "ไม่ระบุชื่อร้าน" }
+                    }));
+                } catch (e) {
+                    console.warn("Could not fetch restaurants to fill names", e);
+                }
             }
 
             setReviews(reviewsData);
@@ -546,6 +567,22 @@ const ManageReviews = () => {
             alert("ลบรีวิวสำเร็จ");
         } catch (err) {
             alert("เกิดข้อผิดพลาดในการลบ");
+        }
+    };
+
+    const toggleHideReview = async (id) => {
+        setTogglingId(id);
+        try {
+            const res = await axios.put(`http://localhost:3001/api/reviews/${id}/toggle-hide`);
+            // Update the review in state
+            setReviews(reviews.map(r => 
+                r.id === id ? { ...r, isHidden: res.data.review.isHidden } : r
+            ));
+        } catch (err) {
+            alert("เกิดข้อผิดพลาดในการเปลี่ยนสถานะรีวิว");
+            console.error("Error toggling review:", err);
+        } finally {
+            setTogglingId(null);
         }
     };
 
@@ -572,22 +609,47 @@ const ManageReviews = () => {
             ) : (
                 <div className="space-y-4">
                     {filtered.map(review => (
-                        <div key={review.id} className="bg-white p-4 rounded-lg shadow">
+                        <div key={review.id} className={`p-4 rounded-lg shadow transition-all ${review.isHidden ? "bg-gray-100 opacity-50" : "bg-white"}`}>
                             <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <p className="font-semibold">{review.name}</p>
-                                    <p className="text-sm text-gray-600">🏪 {review.restaurant?.restaurantName || "ไม่ระบุชื่อร้าน"}</p>
-                                    <p className="text-sm text-gray-600">⭐ {review.rating}/5</p>
+                                <div className="flex-1">
+                                    <p className={`font-semibold ${review.isHidden ? "line-through text-gray-500" : "text-gray-900"}`}>
+                                        {review.name}
+                                    </p>
+                                    <p className={`text-sm ${review.isHidden ? "text-gray-400" : "text-gray-600"}`}>
+                                        🏪 {review.restaurant?.restaurantName || "ไม่ระบุชื่อร้าน"}
+                                    </p>
+                                    <p className={`text-sm ${review.isHidden ? "text-gray-400" : "text-gray-600"}`}>
+                                        ⭐ {review.rating}/5
+                                    </p>
                                 </div>
-                                <button
-                                    onClick={() => deleteReview(review.id)}
-                                    className="text-red-600 hover:text-red-800 transition"
-                                >
-                                    <Trash2 className="w-5 h-5" />
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => toggleHideReview(review.id)}
+                                        disabled={togglingId === review.id}
+                                        className={`px-3 py-1 rounded-lg transition ${
+                                            review.isHidden
+                                                ? "bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                                                : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 disabled:opacity-50"
+                                        }`}
+                                        title={review.isHidden ? "แสดงรีวิว" : "ซ่อนรีวิว"}
+                                    >
+                                        {togglingId === review.id ? "กำลังโหลด..." : (review.isHidden ? "แสดง" : "ซ่อน")}
+                                    </button>
+                                    <button
+                                        onClick={() => deleteReview(review.id)}
+                                        className="text-red-600 hover:text-red-800 transition"
+                                        title="ลบรีวิว"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
-                            <p className="text-gray-700 mb-2">{review.comment}</p>
-                            <p className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString("th-TH")}</p>
+                            <p className={`mb-2 ${review.isHidden ? "text-gray-400" : "text-gray-700"}`}>
+                                {review.comment}
+                            </p>
+                            <p className={`text-xs ${review.isHidden ? "text-gray-400" : "text-gray-500"}`}>
+                                {new Date(review.createdAt).toLocaleDateString("th-TH")}
+                            </p>
                         </div>
                     ))}
                 </div>

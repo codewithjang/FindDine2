@@ -84,6 +84,7 @@ model review {
   email        String?    @db.VarChar(255)
   rating       Float      @db.Float
   comment      String     @db.Text
+  isHidden     Boolean    @default(false)
   createdAt    DateTime?  @default(now()) @db.DateTime(0)
   restaurant   restaurant @relation("RestaurantReviews", fields: [restaurantId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_review_restaurant")
 
