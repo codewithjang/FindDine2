@@ -90,7 +90,7 @@ const RestaurantLogin = () => {
                     </div>
 
                     {/* Forgot password */}
-                    <div className="mt-4 text-right text-sm text-gray-500">
+                    {/* <div className="mt-4 text-right text-sm text-gray-500">
                         <p>
                             <a
                                 href="/"
@@ -100,7 +100,7 @@ const RestaurantLogin = () => {
                                 ลืมรหัสผ่าน?
                             </a>
                         </p>
-                    </div>
+                    </div> */}
 
                     {/* Continue button */}
                     <button

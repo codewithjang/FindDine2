@@ -144,7 +144,7 @@ const LoginForm = () => {
           />
         </div>
 
-        <div className="mt-4 text-right text-sm text-gray-500">
+        {/* <div className="mt-4 text-right text-sm text-gray-500">
           <button
             type="button"
             onClick={handleForgotPassword}
@@ -152,7 +152,7 @@ const LoginForm = () => {
           >
             ลืมรหัสผ่าน?
           </button>
-        </div>
+        </div> */}
 
         <button
           onClick={handleSubmit}
