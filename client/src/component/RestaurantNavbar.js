@@ -33,13 +33,6 @@ function RestaurantNavbar() {
 
       {/* Right side: Notification + Profile */}
       <div className="flex items-center space-x-6 relative">
-        {/* Notification Icon */}
-        <button className="relative hover:text-gray-200">
-          <FaBell size={20} />
-          {/* จุดแดงถ้ามีแจ้งเตือน */}
-          <span className="absolute -top-1 -right-1 bg-red-600 w-3 h-3 rounded-full"></span>
-        </button>
-
         {/* Profile Dropdown */}
         <div className="relative">
           <button
