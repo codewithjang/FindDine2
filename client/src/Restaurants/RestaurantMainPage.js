@@ -728,7 +728,7 @@ export default function RestaurantDashboard() {
                                                     <nav className="flex space-x-8 px-6">
                                                         {[
                                                             { id: 'overview', label: 'ภาพรวม' },
-                                                            { id: 'menu', label: 'เมนูแนะนำ' },
+                                                            // { id: 'menu', label: 'เมนูแนะนำ' },
                                                         ].map((tab) => (
                                                             <button
                                                                 key={tab.id}
