@@ -19,6 +19,7 @@ function RestaurantNavbar() {
   }
 
   const handleLogout = () => {
+    localStorage.removeItem('restaurant');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     window.location.href = '/';
