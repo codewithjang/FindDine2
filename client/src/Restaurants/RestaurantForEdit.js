@@ -117,7 +117,14 @@ export default function RestaurantForEdit() {
         setFormData(prev => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
     };
 
+    const [confirmPassword, setConfirmPassword] = useState("");
     const handleSubmit = async () => {
+        if (formData.password && formData.password.trim() !== "") {
+            if (formData.password !== confirmPassword) {
+                alert("รหัสผ่านใหม่ทั้งสองช่องไม่ตรงกัน");
+                return;
+            }
+        }
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
@@ -130,6 +137,10 @@ export default function RestaurantForEdit() {
                     "restaurantName", "foodType", "email", "address", "nearbyPlaces",
                     "phone", "priceRange", "startingPrice", "description", "latitude", "longitude"
                 ];
+                // แนบรหัสผ่านเฉพาะตอนกรอก
+                if (formData.password && formData.password.trim() !== "") {
+                    fd.append("password", formData.password);
+                }
                 fields.forEach(k => fd.append(k, formData[k] ?? ""));
 
                 // แนบ array fields
@@ -299,7 +310,26 @@ export default function RestaurantForEdit() {
                                 <input name="phone" value={formData.phone} onChange={handleInputChange}
                                     className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-orange-500" />
                             </div>
-
+                            <div>
+                                <label className="text-sm font-medium">รหัสผ่านใหม่ (หากต้องการเปลี่ยน)</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleInputChange}
+                                    className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium">ยืนยันรหัสผ่านใหม่</label>
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-orange-500"
+                                />
+                            </div>
                             <div className="col-span-2">
                                 <label className="text-sm font-medium">ที่อยู่ร้าน</label>
                                 <input name="address" value={formData.address} onChange={handleInputChange}

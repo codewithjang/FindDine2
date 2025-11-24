@@ -247,6 +247,14 @@ exports.update = async (req, res) => {
       }
     });
 
+    if (data.password) {
+      // ถ้ามีรหัสผ่านใหม่ → hash แล้วอัปเดต
+      data.password = await bcrypt.hash(data.password, 10);
+    } else {
+      // ถ้าไม่มี → เอา key ออกจาก payload เพื่อไม่ทับค่าเดิม
+      delete data.password;
+    }
+
     const restaurant = await Restaurant.update(id, data);
     res.status(200).json({ success: true, restaurant });
   } catch (error) {
