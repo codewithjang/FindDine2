@@ -244,6 +244,32 @@ const ManageRestaurants = () => {
     const [editFormData, setEditFormData] = useState(null);
     const [editError, setEditError] = useState("");
     const [editSuccess, setEditSuccess] = useState("");
+    const foodTypeOptions = [
+        { value: "thai", label: "อาหารไทย" },
+        { value: "chinese", label: "อาหารจีน" },
+        { value: "japanese", label: "อาหารญี่ปุ่น" },
+        { value: "korean", label: "อาหารเกาหลี" },
+        { value: "vietnamese", label: "อาหารเวียดนาม" },
+        { value: "indian", label: "อาหารอินเดีย" },
+        { value: "malaysian", label: "อาหารมาเลย์" },
+        { value: "indonesian", label: "อาหารอินโดนีเซีย" },
+        { value: "filipino", label: "อาหารฟิลิปปินส์" },
+        { value: "western", label: "อาหารตะวันตก" },
+        { value: "italian", label: "อาหารอิตาเลียน" },
+        { value: "french", label: "อาหารฝรั่งเศส" },
+        { value: "mexican", label: "อาหารแม็กซิกัน" },
+        { value: "middle-eastern", label: "อาหารตะวันออกกลาง" },
+        { value: "halal", label: "อาหารฮาลาล" },
+        { value: "vegetarian", label: "อาหารมังสวิรัติ" },
+        { value: "vegan", label: "อาหารเจ" },
+        { value: "fast-food", label: "อาหารจานด่วน" },
+        { value: "seafood", label: "อาหารทะเล" },
+        { value: "dessert", label: "ของหวาน / เบเกอรี่" },
+        { value: "cafe", label: "ร้านกาแฟ" },
+        { value: "street-food", label: "อาหารริมทาง" },
+        { value: "fusion", label: "อาหารผสมผสาน" },
+        { value: "bbq", label: "บาร์บีคิว / ปิ้งย่าง" }
+    ];
 
     useEffect(() => {
         fetchRestaurants();
@@ -377,67 +403,108 @@ const ManageRestaurants = () => {
                                 <div className="space-y-3">
                                     <h3 className="text-lg font-semibold text-orange-600">แก้ไขข้อมูลร้าน</h3>
 
-                                    <input
-                                        type="text"
-                                        name="restaurantName"
-                                        placeholder="ชื่อร้าน"
-                                        value={editFormData?.restaurantName || ""}
-                                        onChange={handleEditChange}
-                                        className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
-                                    />
-
-                                    <input
-                                        type="text"
-                                        name="foodType"
-                                        placeholder="ประเภทอาหาร"
-                                        value={editFormData?.foodType || ""}
-                                        onChange={handleEditChange}
-                                        className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
-                                    />
-
-                                    <input
-                                        type="text"
-                                        name="phone"
-                                        placeholder="เบอร์โทร"
-                                        value={editFormData?.phone || ""}
-                                        onChange={handleEditChange}
-                                        className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
-                                    />
-
-                                    <input
-                                        type="text"
-                                        name="address"
-                                        placeholder="ที่อยู่"
-                                        value={editFormData?.address || ""}
-                                        onChange={handleEditChange}
-                                        className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
-                                    />
-
-                                    <div className="flex gap-3">
+                                    <div>
+                                        <label className="text-sm font-medium">ชื่อร้าน</label>
                                         <input
-                                            type="time"
-                                            name="openTime"
-                                            value={editFormData?.openTime || ""}
+                                            type="text"
+                                            name="restaurantName"
+                                            value={editFormData?.restaurantName || ""}
                                             onChange={handleEditChange}
-                                            className="w-1/2 px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
+                                            className="w-full px-3 py-2 mt-1 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm font-medium">ประเภทอาหาร</label>
+                                        <div >
+                                            <select
+                                                name="foodType"
+                                                value={editFormData?.foodType || ""}
+                                                onChange={handleEditChange}
+                                                className="w-full border rounded-lg px-3 py-2 mt-1 focus:ring-2 focus:ring-orange-500"
+                                            >
+                                                <option value="">ประเภทอาหาร</option>
+                                                <optgroup label="อาหารเอเชีย">
+                                                    {foodTypeOptions.slice(0, 9).map(option => (
+                                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                                    ))}
+                                                </optgroup>
+                                                <optgroup label="อาหารยุโรป & ตะวันตก">
+                                                    {foodTypeOptions.slice(9, 13).map(option => (
+                                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                                    ))}
+                                                </optgroup>
+                                                <optgroup label="อาหารตะวันออกกลาง & ฮาลาล">
+                                                    {foodTypeOptions.slice(13, 15).map(option => (
+                                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                                    ))}
+                                                </optgroup>
+                                                <optgroup label="อาหารตามไลฟ์สไตล์ & สุขภาพ">
+                                                    {foodTypeOptions.slice(15, 17).map(option => (
+                                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                                    ))}
+                                                </optgroup>
+                                                <optgroup label="อื่น ๆ">
+                                                    {foodTypeOptions.slice(17).map(option => (
+                                                        <option key={option.value} value={option.value}>{option.label}</option>
+                                                    ))}
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-sm font-medium">เบอร์โทรศัพท์</label>
                                         <input
-                                            type="time"
-                                            name="closeTime"
-                                            value={editFormData?.closeTime || ""}
+                                            type="text"
+                                            name="phone"
+                                            value={editFormData?.phone || ""}
                                             onChange={handleEditChange}
-                                            className="w-1/2 px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
+                                            className="w-full px-3 py-2 mt-1 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
                                         />
                                     </div>
 
-                                    <textarea
-                                        name="description"
-                                        placeholder="คำอธิบาย"
-                                        value={editFormData?.description || ""}
-                                        onChange={handleEditChange}
-                                        rows="2"
-                                        className="w-full px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
-                                    />
+                                    <div>
+                                        <label className="text-sm font-medium">ที่อยู่</label>
+                                        <input
+                                            type="text"
+                                            name="address"
+                                            value={editFormData?.address || ""}
+                                            onChange={handleEditChange}
+                                            className="w-full px-3 py-2 mt-1 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="text-sm font-medium">เวลาเปิด - ปิด</label>
+                                        <div className="flex gap-3 mt-1">
+                                            <input
+                                                type="time"
+                                                name="openTime"
+                                                value={editFormData?.openTime || ""}
+                                                onChange={handleEditChange}
+                                                className="w-1/2 px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
+                                            />
+
+                                            <input
+                                                type="time"
+                                                name="closeTime"
+                                                value={editFormData?.closeTime || ""}
+                                                onChange={handleEditChange}
+                                                className="w-1/2 px-3 py-2 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-sm font-medium">คำอธิบาย</label>
+                                        <textarea
+                                            name="description"
+                                            value={editFormData?.description || ""}
+                                            onChange={handleEditChange}
+                                            rows="2"
+                                            className="w-full px-3 py-2 mt-1 bg-white border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-400"
+                                        />
+                                    </div>
 
                                     {/* ปุ่ม */}
                                     <div className="flex gap-3 pt-2">
@@ -575,7 +642,7 @@ const ManageReviews = () => {
         try {
             const res = await axios.put(`http://localhost:3001/api/reviews/${id}/toggle-hide`);
             // Update the review in state
-            setReviews(reviews.map(r => 
+            setReviews(reviews.map(r =>
                 r.id === id ? { ...r, isHidden: res.data.review.isHidden } : r
             ));
         } catch (err) {
@@ -626,11 +693,10 @@ const ManageReviews = () => {
                                     <button
                                         onClick={() => toggleHideReview(review.id)}
                                         disabled={togglingId === review.id}
-                                        className={`px-3 py-1 rounded-lg transition ${
-                                            review.isHidden
-                                                ? "bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50"
-                                                : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 disabled:opacity-50"
-                                        }`}
+                                        className={`px-3 py-1 rounded-lg transition ${review.isHidden
+                                            ? "bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                                            : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 disabled:opacity-50"
+                                            }`}
                                         title={review.isHidden ? "แสดงรีวิว" : "ซ่อนรีวิว"}
                                     >
                                         {togglingId === review.id ? "กำลังโหลด..." : (review.isHidden ? "แสดง" : "ซ่อน")}
