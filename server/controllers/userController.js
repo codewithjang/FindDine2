@@ -87,3 +87,33 @@ exports.login = async (req, res) => {
     });
   }
 };
+
+exports.changePassword = async (req, res) => {
+  const userId = Number(req.params.id);
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "ไม่พบผู้ใช้" });
+    }
+
+    // ตรวจสอบรหัสผ่านเดิม
+    const match = await bcrypt.compare(currentPassword, user.password);
+    if (!match) {
+      return res.status(400).json({ success: false, message: "รหัสผ่านเดิมไม่ถูกต้อง" });
+    }
+
+    // เข้ารหัสรหัสผ่านใหม่
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    // บันทึกลงฐานข้อมูล
+    const updated = await User.update(userId, { password: hashed });
+
+    return res.json({ success: true, message: "เปลี่ยนรหัสผ่านสำเร็จ" });
+  } catch (err) {
+    console.error("[changePassword] error:", err);
+    return res.status(500).json({ success: false, message: "เกิดข้อผิดพลาด" });
+  }
+};
+
