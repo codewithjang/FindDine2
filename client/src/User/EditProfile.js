@@ -11,20 +11,14 @@ export default function EditProfile() {
 
     useEffect(() => {
         const userStr = localStorage.getItem('user');
-        console.log('[EditProfile] localStorage user:', userStr);
         if (!userStr) {
             navigate('/UserLogin');
             return;
         }
-        let user = null;
-        try {
-            user = JSON.parse(userStr);
-            console.log('[EditProfile] parsed user:', user);
-        } catch {
-            navigate('/UserLogin');
-            return;
-        }
+
+        let user = JSON.parse(userStr);
         const userId = user.id;
+
         axios.get(`http://localhost:3001/api/users/${userId}`)
             .then(res => {
                 setFormData({
@@ -32,9 +26,17 @@ export default function EditProfile() {
                     lastName: res.data.lastName,
                     email: res.data.email
                 });
+
+                // ❗ ล้างช่องรหัสผ่านเสมอ
+                setPasswordData({
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: ""
+                });
             })
             .catch(() => setError('ไม่สามารถโหลดข้อมูลผู้ใช้'));
     }, [navigate]);
+
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -53,6 +55,7 @@ export default function EditProfile() {
         setError('');
         setMessage('');
 
+        // ตรวจสอบผู้ใช้
         const userStr = localStorage.getItem('user');
         if (!userStr) {
             setError('กรุณาเข้าสู่ระบบก่อน');
@@ -69,34 +72,56 @@ export default function EditProfile() {
         }
 
         try {
-            // 1) อัปเดตโปรไฟล์ก่อน
+            // ---------- 1) อัปเดตข้อมูลโปรไฟล์ ----------
+            // Trim user input to avoid leading/trailing spaces
+            const cleanForm = {
+                ...formData,
+                firstName: (formData.firstName || '').trim(),
+                lastName: (formData.lastName || '').trim(),
+                email: (formData.email || '').trim(),
+            };
+
             const res = await axios.put(
                 `http://localhost:3001/api/users/${userId}`,
-                formData
+                cleanForm
             );
 
-            if (res.data.success || res.data.id) {
+            if (res.data.success || res.data.user) {
                 localStorage.setItem("user", JSON.stringify(res.data.user || res.data));
             } else {
                 setError(res.data.message || "เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์");
                 return;
             }
 
-            // 2) ตรวจว่าผู้ใช้ต้องการเปลี่ยนรหัสผ่านไหม
-            const isChangingPassword =
-                passwordData.currentPassword.trim() !== "" ||
-                passwordData.newPassword.trim() !== "" ||
-                passwordData.confirmPassword.trim() !== "";
+            // ---------- 2) ตรวจว่าต้องการเปลี่ยนรหัสผ่านหรือไม่ ----------
+            // Consider password-change intent only when user provided a NEW password
+            // (this prevents browser autofill of currentPassword from forcing the change flow)
+            const isChangingPassword = passwordData.newPassword.trim() !== "";
 
             if (isChangingPassword) {
+                // เช็คว่ากรอกครบทุกช่องหรือไม่ (เมื่อผู้ใช้ตั้งใจเปลี่ยนรหัสผ่าน)
+                if (
+                    passwordData.currentPassword.trim() === "" ||
+                    passwordData.confirmPassword.trim() === ""
+                ) {
+                    setError("กรุณากรอกรหัสผ่านให้ครบทุกช่อง");
+                    return;
+                }
+
+                // เช็ครหัสผ่านใหม่ต้องตรงกัน
                 if (passwordData.newPassword !== passwordData.confirmPassword) {
                     setError("รหัสผ่านใหม่ไม่ตรงกัน");
                     return;
                 }
 
+                // ---------- 3) ส่งคำขอเปลี่ยนรหัสผ่าน ----------
+                // Trim password fields before sending (remove stray spaces)
                 const passRes = await axios.put(
                     `http://localhost:3001/api/users/${userId}/change-password`,
-                    passwordData
+                    {
+                        currentPassword: (passwordData.currentPassword || '').trim(),
+                        newPassword: (passwordData.newPassword || '').trim()
+                    }
                 );
 
                 if (!passRes.data.success) {
@@ -105,7 +130,10 @@ export default function EditProfile() {
                 }
             }
 
+            // ---------- สำเร็จ ----------
             setMessage("บันทึกข้อมูลสำเร็จ!");
+
+            // ล้างช่องรหัสผ่านหลังบันทึกสำเร็จ
             setPasswordData({
                 currentPassword: "",
                 newPassword: "",
@@ -117,6 +145,10 @@ export default function EditProfile() {
             setError(err.response?.data?.message || 'เกิดข้อผิดพลาด');
         }
     };
+
+
+    // Client-side helper: whether user intends to change password (based on newPassword only)
+    const isChangingPass = passwordData.newPassword.trim() !== "";
 
     return (
         <div className="relative flex items-center justify-center min-h-screen bg-gradient-to-r from-black via-black to-gray-800 overflow-hidden px-4">
@@ -140,7 +172,7 @@ export default function EditProfile() {
                             value={formData.firstName}
                             onChange={handleChange}
                             className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
-                            required
+                            autoComplete="given-name"
                         />
                     </div>
 
@@ -152,7 +184,7 @@ export default function EditProfile() {
                             value={formData.lastName}
                             onChange={handleChange}
                             className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
-                            required
+                            autoComplete="family-name"
                         />
                     </div>
 
@@ -164,7 +196,7 @@ export default function EditProfile() {
                             value={formData.email}
                             onChange={handleChange}
                             className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
-                            required
+                            autoComplete="email"
                         />
                     </div>
 
@@ -176,7 +208,8 @@ export default function EditProfile() {
                             value={passwordData.currentPassword}
                             onChange={handleChangePassword}
                             className="w-full border px-3 py-2 rounded"
-                            required
+                            required={isChangingPass}
+                            autoComplete="current-password"
                         />
                     </div>
 
@@ -188,7 +221,8 @@ export default function EditProfile() {
                             value={passwordData.newPassword}
                             onChange={handleChangePassword}
                             className="w-full border px-3 py-2 rounded"
-                            required
+                            autoComplete="new-password"
+                            
                         />
                     </div>
 
@@ -200,7 +234,8 @@ export default function EditProfile() {
                             value={passwordData.confirmPassword}
                             onChange={handleChangePassword}
                             className="w-full border px-3 py-2 rounded"
-                            required
+                            required={isChangingPass}
+                            autoComplete="new-password"
                         />
                     </div>
 

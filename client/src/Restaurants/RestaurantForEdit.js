@@ -92,7 +92,8 @@ export default function RestaurantForEdit() {
             .get(`http://localhost:3001/api/restaurants/${restaurantId}`, token ? { headers: { Authorization: `Bearer ${token}` } } : {})
             .then(res => {
                 const normalized = normalizeFromBackend(res.data);
-                setFormData(prev => ({ ...prev, ...normalized }));
+                // ตั้งค่า password เป็นค่าว่างทุกครั้งที่โหลดข้อมูลร้าน
+                setFormData(prev => ({ ...prev, ...normalized, password: "" }));
                 setPreviewImages(normalized.photos.map(p => p.url).filter(Boolean));
             })
             .catch(err => console.error('โหลดข้อมูลไม่สำเร็จ:', err));
