@@ -360,6 +360,37 @@ const RestaurantDetail = (props) => {
     }
   }, [activeTab, restaurantId]);
 
+  const isRestaurantOpen = (openTime, closeTime) => {
+    if (!openTime || !closeTime) return null;
+
+    try {
+      // แยก HH:mm จากเวลา
+      const [openHour, openMinute] = openTime.split(':').map(Number);
+      const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+
+      // เวลาปัจจุบัน
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+      // เวลาเปิด-ปิดเป็นนาที
+      const openTimeInMinutes = openHour * 60 + openMinute;
+      const closeTimeInMinutes = closeHour * 60 + closeMinute;
+
+      // ถ้าเวลาปิดน้อยกว่าเวลาเปิด = ปิดเที่ยงคืน (เช่น 23:00 - 06:00)
+      if (closeTimeInMinutes < openTimeInMinutes) {
+        return currentTimeInMinutes >= openTimeInMinutes || currentTimeInMinutes < closeTimeInMinutes;
+      }
+
+      // เวลาเปิดปกติ (เช่น 10:00 - 21:00)
+      return currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes < closeTimeInMinutes;
+    } catch (error) {
+      console.error("Error parsing time:", error);
+      return null;
+    }
+  };
+
   // ฟังก์ชันส่งรีวิว
   const handleSubmitReview = async (e) => {
     e.preventDefault();
@@ -483,15 +514,20 @@ const RestaurantDetail = (props) => {
                       <span className="font-medium">{restaurant.rating}</span>
                       <span className="text-gray-500">({restaurant.reviewCount} รีวิว)</span>
                     </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${restaurant.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}
-                    >
-                      <Clock className="w-4 h-4" />
-                      {restaurant.isOpen
-                        ? `เปิดอยู่ (${restaurant.openTime} - ${restaurant.closeTime} น.)`
-                        : `ปิด (${restaurant.openTime} - ${restaurant.closeTime} น.)`}
-                    </span>
+                    {(() => {
+                      const isOpen = isRestaurantOpen(restaurant.openTime, restaurant.closeTime);
+                      return (
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 
+                      ${isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                        >
+                          <Clock className="w-4 h-4" />
+                          {isOpen
+                            ? `เปิดอยู่ (${restaurant.openTime} - ${restaurant.closeTime} น.)`
+                            : `ปิด (${restaurant.openTime} - ${restaurant.closeTime} น.)`}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
                 <div className="text-right">
