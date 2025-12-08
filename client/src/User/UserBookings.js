@@ -77,7 +77,7 @@ export default function UserBookings() {
               <div key={idx} className="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
                   <div className="text-sm text-gray-500">รหัสการจอง</div>
-                  <div className="font-mono font-semibold text-lg">{b.id}</div>
+                  <div className="font-semibold text-lg text-orange-600">{b.id}</div>
                 </div>
                 <div className="mt-3 md:mt-0">
                   <div className="text-sm text-gray-500">ร้าน</div>
@@ -91,7 +91,7 @@ export default function UserBookings() {
                     ) : b.status === 'rejected' ? (
                       <span className="px-2 py-1 rounded-full bg-red-100 text-red-800 text-sm">ปฏิเสธ</span>
                     ) : (
-                      <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm">รอดำเนินการ</span>
+                      <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm">รอตอบกลับ</span>
                     )}
                   </div>
                 </div>
