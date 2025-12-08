@@ -21,29 +21,29 @@ const AdminDashboard = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {/* Header */}
-            <div className="w-full relative flex flex-col h-[80px] sm:h-[140px] md:h-[180px]">
+            <div className="w-full relative flex flex-col h-[80px] sm:h-[140px] md:h-[200px]">
                 <img
                     src={bg}
                     alt="Background"
                     className="absolute inset-0 w-full h-full object-cover opacity-50 md:opacity-90 z-0"
                 />
                 <div className="relative flex flex-col justify-center items-start flex-grow px-4 sm:px-8 md:px-20">
-                    <h1 className="text-3xl font-bold drop-shadow-md mb-2">Admin Dashboard</h1>
-                    <p className="text-lg text-gray-500 font-semibold drop-shadow-md">สวัสดี {admin?.name || admin?.email}</p>
+                    <h1 className="text-3xl font-semibold drop-shadow-md mb-2">Admin Dashboard</h1>
+                    <p className="text-lg text-gray-500 drop-shadow-md">สวัสดี {admin?.name || admin?.email}</p>
                 </div>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="bg-white border-b sticky top-0 z-40">
+            <div className="bg-white border-b sticky top-0 z-40 shadow-md">
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="flex space-x-8 overflow-x-auto">
                         {[
-                            { id: "dashboard", label: "📊 แดชบอร์ด" },
-                            { id: "users", label: "👥 จัดการผู้ใช้" },
-                            { id: "bookings", label: "📅 ดูการจอง" },
-                            { id: "add-restaurant", label: "➕ เพิ่มร้านอาหาร" },
-                            { id: "restaurants", label: "🍽️ จัดการร้านอาหาร" },
-                            { id: "reviews", label: "⭐ จัดการรีวิว" }
+                            { id: "dashboard", label: "แดชบอร์ด" },
+                            { id: "users", label: "จัดการผู้ใช้" },
+                            { id: "bookings", label: "ดูการจอง" },
+                            { id: "add-restaurant", label: "เพิ่มร้านอาหาร" },
+                            { id: "restaurants", label: "จัดการร้านอาหาร" },
+                            { id: "reviews", label: "จัดการรีวิว" }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -111,24 +111,66 @@ const DashboardOverview = () => {
             {items.map((item, index) => (
                 <div
                     key={index}
-                    className={`
-                        rounded-2xl p-6 shadow-lg 
-                        bg-orange-100 relative overflow-hidden
-                        border border-orange-100
-                        hover:shadow-xl transition-all
-                    `}
-                    style={{ minHeight: "150px" }}
+                    className="
+                        relative overflow-hidden rounded-2xl p-6
+                        bg-orange-50/80 backdrop-blur-lg
+                        border border-orange-200/40
+                        shadow-md
+                        hover:shadow-[0_8px_30px_rgba(255,140,0,0.35)]
+                        transition-all duration-300
+                    "
+                    style={{ minHeight: "160px" }}
                 >
-                    {/* Accent Ribbon */}
+                    {/* Top Gradient Layer */}
                     <div
-                        className={`absolute top-0 right-0 w-20 h-20 rounded-bl-full bg-gradient-to-br ${item.accent} opacity-20`}
+                        className="
+                        absolute inset-0 bg-gradient-to-br
+                        from-orange-100/70 via-white/40 to-orange-200/30
+                        opacity-80
+                        "
                     ></div>
 
-                    <p className="text-gray-500 text-sm font-medium">{item.label}</p>
+                    {/* Gloss Highlight */}
+                    <div
+                        className="
+                        absolute top-0 left-0 w-full h-2/5
+                        bg-gradient-to-b from-white/50 to-transparent
+                        opacity-60
+                        "
+                    ></div>
 
-                    <p className="text-4xl font-bold mt-3 bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
-                        {item.value}
-                    </p>
+                    {/* Credit Card Accent Circle */}
+                    <div
+                        className="
+                        absolute -bottom-8 -right-8 w-32 h-32 rounded-full
+                        bg-gradient-to-tr from-orange-400 to-orange-600
+                        opacity-20 blur-xl
+                        "
+                    ></div>
+
+                    {/* Smaller Accent Circle */}
+                    <div
+                        className="
+                        absolute -top-8 -left-8 w-24 h-24 rounded-full
+                        bg-gradient-to-br from-orange-300 to-orange-500
+                        opacity-10 blur-lg
+                        "
+                    ></div>
+
+                    {/* Content */}
+                    <div className="relative">
+                        <p className="text-gray-600 text-sm font-medium tracking-wide">
+                            {item.label}
+                        </p>
+
+                        <p className="
+                            text-4xl font-bold mt-4 
+                            bg-gradient-to-r from-orange-500 to-orange-700 
+                            bg-clip-text text-transparent
+                        ">
+                            {item.value}
+                        </p>
+                    </div>
                 </div>
             ))}
         </div>
