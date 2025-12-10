@@ -25,8 +25,8 @@ function RestaurantNavbar() {
     window.location.href = '/';
   };
 
-  return (
-    <nav className="w-full bg-orange-600 text-white flex justify-between items-center px-8 py-3 shadow-md relative">
+  return ( 
+    <nav className="sticky top-0 w-full bg-orange-600 text-white flex justify-between items-center px-8 py-3 shadow-md relative z-50 ">
       {/* Logo */}
       <Link to={`/RestaurantForMainPage/${restaurantId}`} className="flex items-center">
         <img src={logo} alt="FindDine Logo" className="h-8 w-auto" />
