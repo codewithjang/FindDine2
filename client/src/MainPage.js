@@ -710,8 +710,8 @@ export default function MainPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-1 text-orange-600">
                     {/* <DollarSign className="w-4 h-4" /> */}
-                    <span className="font-medium">
-                      ฿ {restaurant.priceRange}
+                    <span className="font-small">
+                      ช่วงราคา ฿{restaurant.priceRange}
                     </span>
                   </div>
                 </div>
