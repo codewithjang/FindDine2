@@ -708,7 +708,7 @@ export default function MainPage() {
                 <p className="text-gray-600 mb-3">{restaurant.foodType}</p>
 
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-1 text-orange-600">
+                  <div className="flex items-center space-x-1 text-orange-600 text-sm">
                     {/* <DollarSign className="w-4 h-4" /> */}
                     <span className="font-small">
                       ช่วงราคา ฿{restaurant.priceRange}
